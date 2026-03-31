@@ -11,43 +11,48 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
 
-class _AuthNotifier extends AsyncNotifier<void> {
-  @override
-  Future<void> build() async {}
+class AuthActionResult {
+  const AuthActionResult({required this.requiresEmailConfirmation, this.email});
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  final bool requiresEmailConfirmation;
+  final String? email;
+}
+
+class _AuthNotifier extends AsyncNotifier<AuthActionResult?> {
+  @override
+  Future<AuthActionResult?> build() async => null;
+
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(authRepositoryProvider).signIn(
-            email: email.trim(),
-            password: password,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email.trim(), password: password);
+      return null;
     });
   }
 
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signUp({required String email, required String password}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(authRepositoryProvider).signUp(
-            email: email.trim(),
-            password: password,
-          );
+      final response = await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email.trim(), password: password);
+      return AuthActionResult(
+        requiresEmailConfirmation: response.session == null,
+        email: email.trim(),
+      );
     });
   }
 
   Future<void> signOut() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signOut(),
-    );
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).signOut();
+      return null;
+    });
   }
 }
 
 final authNotifierProvider =
-    AsyncNotifierProvider<_AuthNotifier, void>(_AuthNotifier.new);
+    AsyncNotifierProvider<_AuthNotifier, AuthActionResult?>(_AuthNotifier.new);

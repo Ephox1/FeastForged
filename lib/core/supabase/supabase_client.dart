@@ -4,6 +4,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Access the singleton Supabase client throughout the app.
 SupabaseClient get supabase => Supabase.instance.client;
 
+class StartupConfigException implements Exception {
+  const StartupConfigException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 /// Initialize Supabase. Call once in main() before runApp().
 Future<void> initSupabase() async {
   const url = String.fromEnvironment(
@@ -12,11 +21,11 @@ Future<void> initSupabase() async {
   );
   const anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
-  assert(anonKey.isNotEmpty, 'SUPABASE_ANON_KEY must be set via --dart-define');
+  if (anonKey.isEmpty) {
+    throw const StartupConfigException(
+      'Missing SUPABASE_ANON_KEY. Launch the app with --dart-define=SUPABASE_ANON_KEY=<your-anon-key>.',
+    );
+  }
 
-  await Supabase.initialize(
-    url: url,
-    anonKey: anonKey,
-    debug: kDebugMode,
-  );
+  await Supabase.initialize(url: url, anonKey: anonKey, debug: kDebugMode);
 }

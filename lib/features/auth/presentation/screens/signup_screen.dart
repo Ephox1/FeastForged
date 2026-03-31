@@ -31,7 +31,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(authNotifierProvider.notifier).signUp(
+    await ref
+        .read(authNotifierProvider.notifier)
+        .signUp(
           email: _emailController.text,
           password: _passwordController.text,
         );
@@ -50,9 +52,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
         );
       }
-      if (next is AsyncData<void> && !next.isLoading) {
-        // Signed up successfully — go to onboarding
-        if (context.mounted) context.go('/auth/onboarding');
+      if (next is AsyncData<AuthActionResult?> && !next.isLoading) {
+        final result = next.value;
+        if (result == null || !context.mounted) return;
+
+        if (result.requiresEmailConfirmation) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Verification email sent to ${result.email}. Confirm your email, then sign in.',
+              ),
+            ),
+          );
+          context.go('/auth/login');
+          return;
+        }
+
+        context.go('/auth/onboarding');
       }
     });
 
@@ -70,15 +86,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Join FeastForged',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Set your goals and start tracking today.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(

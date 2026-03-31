@@ -20,20 +20,35 @@ class LogMealScreen extends ConsumerStatefulWidget {
 class _LogMealScreenState extends ConsumerState<LogMealScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
-  late FoodItem _food;
-  late MealType _mealType;
+  FoodItem? _food;
+  MealType _mealType = MealType.other;
 
   @override
   void initState() {
     super.initState();
-    final data = widget.foodData ?? {};
-    final foodJson = data['food'] as Map<String, dynamic>? ?? {};
-    _food = FoodItem.fromJson(foodJson);
-    _mealType = MealType.values.firstWhere(
-      (e) => e.name == (data['mealType'] as String? ?? 'other'),
-      orElse: () => MealType.other,
-    );
-    _amountController.text = _food.defaultServingGrams.toStringAsFixed(0);
+    _loadFood();
+  }
+
+  void _loadFood() {
+    final data = widget.foodData;
+    if (data == null) return;
+
+    final foodJson = data['food'];
+    if (foodJson is! Map<String, dynamic>) return;
+
+    try {
+      final parsedFood = FoodItem.fromJson(foodJson);
+      _food = parsedFood;
+      _mealType = MealType.values.firstWhere(
+        (e) => e.name == (data['mealType'] as String? ?? 'other'),
+        orElse: () => MealType.other,
+      );
+      _amountController.text = parsedFood.defaultServingGrams.toStringAsFixed(
+        0,
+      );
+    } catch (_) {
+      _food = null;
+    }
   }
 
   @override
@@ -44,19 +59,20 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
 
   double get _amount =>
       double.tryParse(_amountController.text.trim()) ??
-      _food.defaultServingGrams;
+      (_food?.defaultServingGrams ?? 100);
 
   Future<void> _submit() async {
+    final food = _food;
+    if (food == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(mealLoggerProvider.notifier).logFood(
-          food: _food,
-          amountGrams: _amount,
-          mealType: _mealType,
-        );
+    await ref
+        .read(mealLoggerProvider.notifier)
+        .logFood(food: food, amountGrams: _amount, mealType: _mealType);
   }
 
   @override
   Widget build(BuildContext context) {
+    final food = _food;
     final logState = ref.watch(mealLoggerProvider);
 
     ref.listen(mealLoggerProvider, (_, next) {
@@ -73,13 +89,49 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
       }
     });
 
-    final calories = _food.caloriesForAmount(_amount);
-    final protein = _food.proteinForAmount(_amount);
-    final carbs = _food.carbsForAmount(_amount);
-    final fat = _food.fatForAmount(_amount);
+    if (food == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Log meal')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 56),
+                const SizedBox(height: 16),
+                Text(
+                  'This food entry could not be loaded.',
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Go back and choose a food again.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.pop(),
+                  child: const Text('Back to search'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final calories = food.caloriesForAmount(_amount);
+    final protein = food.proteinForAmount(_amount);
+    final carbs = food.carbsForAmount(_amount);
+    final fat = food.fatForAmount(_amount);
 
     return Scaffold(
-      appBar: AppBar(title: Text(_food.name)),
+      appBar: AppBar(title: Text(food.name)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -88,13 +140,12 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_food.brand != null) ...[
+                if (food.brand != null) ...[
                   Text(
-                    _food.brand!,
+                    food.brand!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -108,10 +159,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                   ),
                   items: MealType.values
                       .map(
-                        (t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(t.label),
-                        ),
+                        (t) => DropdownMenuItem(value: t, child: Text(t.label)),
                       )
                       .toList(),
                   onChanged: (v) => setState(() => _mealType = v ?? _mealType),
@@ -126,8 +174,9 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                     prefixIcon: Icon(Icons.scale_outlined),
                     suffixText: 'g',
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   onChanged: (_) => setState(() {}),
                   validator: (v) =>
                       Validators.positiveNumber(v, fieldName: 'Amount'),
@@ -143,9 +192,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                       children: [
                         Text(
                           'Nutrition for ${_amount.toInt()}g',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
@@ -207,18 +254,15 @@ class _NutritionRow extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight:
-                      highlight ? FontWeight.bold : FontWeight.normal,
-                ),
+              fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: highlight
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                ),
+              fontWeight: FontWeight.bold,
+              color: highlight ? Theme.of(context).colorScheme.primary : null,
+            ),
           ),
         ],
       ),
