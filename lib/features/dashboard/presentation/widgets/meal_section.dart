@@ -47,6 +47,31 @@ class MealSection extends ConsumerWidget {
             ),
           ),
           if (entries.isNotEmpty) const Divider(height: 1),
+          if (entries.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    Text(
+                      'Nothing logged yet',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: onAddPressed,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add food'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ...entries.map((entry) => _FoodLogTile(entry: entry)),
         ],
       ),

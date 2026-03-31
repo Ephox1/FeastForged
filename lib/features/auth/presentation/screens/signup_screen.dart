@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/utils/error_messages.dart';
 import '../../../../shared/utils/validators.dart';
 import '../../../../shared/widgets/loading_button.dart';
 import '../../providers/auth_provider.dart';
@@ -47,7 +48,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.error.toString()),
+            content: Text(ErrorMessages.friendly(next.error!)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

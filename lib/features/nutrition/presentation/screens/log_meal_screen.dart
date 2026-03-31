@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/utils/error_messages.dart';
 import '../../../../shared/utils/validators.dart';
 import '../../../../shared/widgets/loading_button.dart';
 import '../../domain/food_item.dart';
@@ -43,9 +44,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
         (e) => e.name == (data['mealType'] as String? ?? 'other'),
         orElse: () => MealType.other,
       );
-      _amountController.text = parsedFood.defaultServingGrams.toStringAsFixed(
-        0,
-      );
+      _amountController.text = parsedFood.defaultServingGrams.toStringAsFixed(0);
     } catch (_) {
       _food = null;
     }
@@ -60,6 +59,12 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
   double get _amount =>
       double.tryParse(_amountController.text.trim()) ??
       (_food?.defaultServingGrams ?? 100);
+
+  List<double> _servingShortcuts(FoodItem food) {
+    final defaultServing = food.defaultServingGrams;
+    final values = <double>{50, 100, 150, 200, defaultServing};
+    return values.where((value) => value > 0).toList()..sort();
+  }
 
   Future<void> _submit() async {
     final food = _food;
@@ -79,7 +84,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.error.toString()),
+            content: Text(ErrorMessages.friendly(next.error)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -149,8 +154,42 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-
-                // Meal type selector
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quick portions',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _servingShortcuts(food)
+                              .map(
+                                (grams) => ChoiceChip(
+                                  label: Text('${grams.toInt()}g'),
+                                  selected:
+                                      _amountController.text.trim() ==
+                                      grams.toInt().toString(),
+                                  onSelected: (_) {
+                                    _amountController.text =
+                                        grams.toInt().toString();
+                                    setState(() {});
+                                  },
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<MealType>(
                   value: _mealType,
                   decoration: const InputDecoration(
@@ -165,8 +204,6 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                   onChanged: (v) => setState(() => _mealType = v ?? _mealType),
                 ),
                 const SizedBox(height: 16),
-
-                // Amount field
                 TextFormField(
                   controller: _amountController,
                   decoration: const InputDecoration(
@@ -182,8 +219,6 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                       Validators.positiveNumber(v, fieldName: 'Amount'),
                 ),
                 const SizedBox(height: 24),
-
-                // Nutrition preview
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -194,6 +229,13 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                           'Nutrition for ${_amount.toInt()}g',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Live preview before you save it.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _NutritionRow(
@@ -218,7 +260,6 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
                 LoadingButton(
                   onPressed: _submit,
                   label: 'Log to ${_mealType.label}',

@@ -52,6 +52,14 @@ class _AuthNotifier extends AsyncNotifier<AuthActionResult?> {
       return null;
     });
   }
+
+  Future<void> resetPassword(String email) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).resetPassword(email.trim());
+      return null;
+    });
+  }
 }
 
 final authNotifierProvider =

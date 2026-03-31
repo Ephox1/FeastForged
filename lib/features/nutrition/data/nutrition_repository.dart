@@ -11,13 +11,32 @@ class NutritionRepository {
     if (query.trim().isEmpty) return [];
 
     final userId = supabase.auth.currentUser?.id;
+    final escapedQuery = query.trim().replaceAll(',', ' ');
 
     final data = await supabase
         .from('food_items')
         .select()
-        .or('name.ilike.%$query%,brand.ilike.%$query%')
+        .or('name.ilike.%$escapedQuery%,brand.ilike.%$escapedQuery%')
         .or('is_custom.eq.false,user_id.eq.$userId')
+        .order('is_custom', ascending: false)
+        .order('name')
         .limit(30);
+
+    return (data as List)
+        .map((json) => FoodItem.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<FoodItem>> fetchPopularFoods() async {
+    final userId = supabase.auth.currentUser?.id;
+
+    final data = await supabase
+        .from('food_items')
+        .select()
+        .or('is_custom.eq.false,user_id.eq.$userId')
+        .order('is_custom', ascending: false)
+        .order('name')
+        .limit(12);
 
     return (data as List)
         .map((json) => FoodItem.fromJson(json as Map<String, dynamic>))

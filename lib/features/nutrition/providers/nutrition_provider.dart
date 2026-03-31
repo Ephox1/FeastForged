@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -7,12 +10,19 @@ import '../domain/food_item.dart';
 import '../domain/meal_log_entry.dart';
 
 const _uuid = Uuid();
+const _recentFoodsStorageKey = 'recent_foods';
 
 final nutritionRepositoryProvider = Provider<NutritionRepository>(
   (_) => const NutritionRepository(),
 );
 
-// ── Food search ───────────────────────────────────────────────────────────────
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
+  _,
+) async {
+  return SharedPreferences.getInstance();
+});
+
+// Food search
 
 class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
   @override
@@ -25,7 +35,7 @@ class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
     }
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(nutritionRepositoryProvider).searchFoods(query),
+      () => ref.read(nutritionRepositoryProvider).searchFoods(query.trim()),
     );
   }
 
@@ -37,15 +47,55 @@ final foodSearchProvider =
       _FoodSearchNotifier.new,
     );
 
-// ── Today's logs ──────────────────────────────────────────────────────────────
-
-final todayLogsProvider = FutureProvider<List<MealLogEntry>>((ref) async {
-  return ref
-      .watch(nutritionRepositoryProvider)
-      .fetchLogsForDate(DateTime.now());
+final popularFoodsProvider = FutureProvider<List<FoodItem>>((ref) async {
+  return ref.watch(nutritionRepositoryProvider).fetchPopularFoods();
 });
 
-// ── Meal logger ───────────────────────────────────────────────────────────────
+class _RecentFoodsNotifier extends AsyncNotifier<List<FoodItem>> {
+  @override
+  Future<List<FoodItem>> build() async {
+    final preferences = await ref.watch(sharedPreferencesProvider.future);
+    final storedFoods =
+        preferences.getStringList(_recentFoodsStorageKey) ?? const [];
+
+    return storedFoods
+        .map(
+          (foodJson) => FoodItem.fromJson(
+            jsonDecode(foodJson) as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> addFood(FoodItem food) async {
+    final preferences = await ref.read(sharedPreferencesProvider.future);
+    final current = [...state.valueOrNull ?? []];
+
+    current.removeWhere((item) => item.id == food.id);
+    current.insert(0, food);
+
+    final trimmed = current.take(8).toList(growable: false);
+    await preferences.setStringList(
+      _recentFoodsStorageKey,
+      trimmed.map((item) => jsonEncode(item.toJson())).toList(),
+    );
+
+    state = AsyncData(trimmed);
+  }
+}
+
+final recentFoodsProvider =
+    AsyncNotifierProvider<_RecentFoodsNotifier, List<FoodItem>>(
+      _RecentFoodsNotifier.new,
+    );
+
+// Today's logs
+
+final todayLogsProvider = FutureProvider<List<MealLogEntry>>((ref) async {
+  return ref.watch(nutritionRepositoryProvider).fetchLogsForDate(DateTime.now());
+});
+
+// Meal logger
 
 class _MealLoggerNotifier extends AsyncNotifier<void> {
   @override
@@ -77,6 +127,7 @@ class _MealLoggerNotifier extends AsyncNotifier<void> {
       );
 
       await ref.read(nutritionRepositoryProvider).addLogEntry(entry);
+      await ref.read(recentFoodsProvider.notifier).addFood(food);
       ref.invalidate(todayLogsProvider);
     });
   }
@@ -94,7 +145,54 @@ final mealLoggerProvider = AsyncNotifierProvider<_MealLoggerNotifier, void>(
   _MealLoggerNotifier.new,
 );
 
-// ── Aggregation helpers ───────────────────────────────────────────────────────
+class _CustomFoodNotifier extends AsyncNotifier<FoodItem?> {
+  @override
+  Future<FoodItem?> build() async => null;
+
+  Future<FoodItem?> createCustomFood({
+    required String name,
+    String? brand,
+    required double caloriesPer100g,
+    required double proteinPer100g,
+    required double carbsPer100g,
+    required double fatPer100g,
+    required double defaultServingGrams,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) throw Exception('Not authenticated');
+
+      final food = FoodItem(
+        id: _uuid.v4(),
+        name: name.trim(),
+        brand: brand?.trim().isEmpty ?? true ? null : brand!.trim(),
+        caloriesPer100g: caloriesPer100g,
+        proteinPer100g: proteinPer100g,
+        carbsPer100g: carbsPer100g,
+        fatPer100g: fatPer100g,
+        defaultServingGrams: defaultServingGrams,
+        isCustom: true,
+        userId: userId,
+      );
+
+      final created = await ref
+          .read(nutritionRepositoryProvider)
+          .createCustomFood(food);
+      await ref.read(recentFoodsProvider.notifier).addFood(created);
+      ref.invalidate(popularFoodsProvider);
+      return created;
+    });
+    return state.valueOrNull;
+  }
+}
+
+final customFoodProvider =
+    AsyncNotifierProvider<_CustomFoodNotifier, FoodItem?>(
+      _CustomFoodNotifier.new,
+    );
+
+// Aggregation helpers
 
 class DailyTotals {
   const DailyTotals({

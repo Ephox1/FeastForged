@@ -28,20 +28,7 @@ class _ProfileNotifier extends AsyncNotifier<UserProfile?> {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) throw Exception('Not authenticated');
 
-      final calories = ProfileRepository.calculateTDEE(
-        weightKg: weightKg,
-        heightCm: heightCm,
-        age: age,
-        activityLevel: activityLevel,
-        goal: goal,
-      );
-
-      // Macro split: 30% protein, 45% carbs, 25% fat
-      final protein = ((calories * 0.30) / 4).round();
-      final carbs = ((calories * 0.45) / 4).round();
-      final fat = ((calories * 0.25) / 9).round();
-
-      final profile = UserProfile(
+      final profile = _buildProfile(
         id: user.id,
         email: user.email ?? '',
         weightKg: weightKg,
@@ -49,11 +36,6 @@ class _ProfileNotifier extends AsyncNotifier<UserProfile?> {
         age: age,
         activityLevel: activityLevel,
         goal: goal,
-        dailyCalorieTarget: calories,
-        dailyProteinTarget: protein,
-        dailyCarbTarget: carbs,
-        dailyFatTarget: fat,
-        createdAt: DateTime.now().toUtc(),
       );
 
       final saved = await ref
@@ -62,6 +44,78 @@ class _ProfileNotifier extends AsyncNotifier<UserProfile?> {
       ref.invalidate(currentProfileProvider);
       return saved;
     });
+  }
+
+  Future<void> updateProfile({
+    required UserProfile existingProfile,
+    required double weightKg,
+    required double heightCm,
+    required int age,
+    required ActivityLevel activityLevel,
+    required Goal goal,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final profile = _buildProfile(
+        id: existingProfile.id,
+        email: existingProfile.email,
+        weightKg: weightKg,
+        heightCm: heightCm,
+        age: age,
+        activityLevel: activityLevel,
+        goal: goal,
+        createdAt: existingProfile.createdAt,
+        displayName: existingProfile.displayName,
+      );
+
+      final saved = await ref
+          .read(profileRepositoryProvider)
+          .upsertProfile(profile);
+      ref.invalidate(currentProfileProvider);
+      return saved;
+    });
+  }
+
+  UserProfile _buildProfile({
+    required String id,
+    required String email,
+    String? displayName,
+    required double weightKg,
+    required double heightCm,
+    required int age,
+    required ActivityLevel activityLevel,
+    required Goal goal,
+    DateTime? createdAt,
+  }) {
+    final calories = ProfileRepository.calculateTDEE(
+      weightKg: weightKg,
+      heightCm: heightCm,
+      age: age,
+      activityLevel: activityLevel,
+      goal: goal,
+    );
+
+    // Macro split: 30% protein, 45% carbs, 25% fat
+    final protein = ((calories * 0.30) / 4).round();
+    final carbs = ((calories * 0.45) / 4).round();
+    final fat = ((calories * 0.25) / 9).round();
+
+    return UserProfile(
+      id: id,
+      email: email,
+      displayName: displayName,
+      weightKg: weightKg,
+      heightCm: heightCm,
+      age: age,
+      activityLevel: activityLevel,
+      goal: goal,
+      dailyCalorieTarget: calories,
+      dailyProteinTarget: protein,
+      dailyCarbTarget: carbs,
+      dailyFatTarget: fat,
+      createdAt: createdAt ?? DateTime.now().toUtc(),
+      updatedAt: createdAt != null ? DateTime.now().toUtc() : null,
+    );
   }
 }
 

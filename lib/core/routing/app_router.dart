@@ -6,8 +6,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/onboarding_screen.dart';
+import '../../features/auth/presentation/screens/edit_profile_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/auth/providers/profile_provider.dart';
 import '../../features/nutrition/presentation/screens/food_search_screen.dart';
+import '../../features/nutrition/presentation/screens/create_custom_food_screen.dart';
 import '../../features/nutrition/presentation/screens/log_meal_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -32,12 +35,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth/onboarding',
         builder: (_, __) => const OnboardingScreen(),
       ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (_, __) {
+          final profile = ref.read(currentProfileProvider).valueOrNull;
+          if (profile == null) return const OnboardingScreen();
+          return EditProfileScreen(profile: profile);
+        },
+      ),
       GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
       GoRoute(
         path: '/food-search',
         builder: (_, state) {
           final mealType = state.uri.queryParameters['mealType'] ?? 'other';
           return FoodSearchScreen(mealType: mealType);
+        },
+      ),
+      GoRoute(
+        path: '/food-search/custom',
+        builder: (_, state) {
+          final mealType = state.uri.queryParameters['mealType'] ?? 'other';
+          return CreateCustomFoodScreen(mealType: mealType);
         },
       ),
       GoRoute(

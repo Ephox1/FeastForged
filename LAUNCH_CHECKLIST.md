@@ -3,10 +3,12 @@
 ## Product
 
 - [ ] Confirm the signup flow that matches Supabase auth settings
-- [ ] Add profile editing after onboarding
-- [ ] Add custom foods for anything missing from the seed catalog
-- [ ] Add empty, offline, and retry states across auth, dashboard, and search
+- [x] Add profile editing after onboarding
+- [x] Add custom foods for anything missing from the seed catalog
+- [x] Add empty, offline, and retry states across auth, dashboard, and search
 - [ ] Decide whether calorie targets should ask for sex or allow manual override
+- [x] Add onboarding target explanation and dashboard empty-state guidance
+- [x] Add popular foods, recent foods, and serving shortcuts
 
 ## Backend and data
 
@@ -28,9 +30,10 @@
 
 - [ ] Add unit tests for auth flow decisions
 - [ ] Add widget tests for onboarding and error states
-- [ ] Add a smoke test for meal search to meal log to dashboard refresh
+- [x] Add a smoke test for meal search to meal log to dashboard refresh
 - [ ] Run `flutter analyze` and `flutter test` in CI
 - [ ] Capture crash reporting before beta rollout
+- [x] Keep `flutter analyze` and `flutter test` green locally
 
 ## Store readiness
 

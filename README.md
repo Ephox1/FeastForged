@@ -5,10 +5,12 @@ FeastForged is a Flutter nutrition-tracking app focused on simple logging, clear
 ## MVP features
 
 - Email/password authentication with Supabase
-- Onboarding flow for calorie and macro targets
-- Dashboard with daily calorie and macro progress
-- Search from a seeded food catalog
-- Meal logging by grams and meal type
+- Forgot-password recovery and email-confirmation-safe signup handling
+- Onboarding flow for calorie and macro targets with an inline target preview
+- Dashboard with daily calorie and macro progress, empty-state guidance, and target editing
+- Search from a seeded food catalog with recents and popular starter foods
+- Meal logging by grams, meal type, and serving shortcut chips
+- Custom food creation for foods missing from the seed catalog
 - Delete logged entries
 
 ## Stack
@@ -58,3 +60,9 @@ Without that file, release signing is intentionally left unconfigured so debug k
 flutter analyze
 flutter test
 ```
+
+For manual device testing, use `MANUAL_SMOKE_TEST.md`.
+
+## Product alignment
+
+The current repo is a smaller MVP than the larger FeastForge / PrepPal architecture docs in the external vault. See `PROJECT_ALIGNMENT.md` for the gap analysis and recommended next build order.
