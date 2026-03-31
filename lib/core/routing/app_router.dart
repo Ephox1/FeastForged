@@ -12,6 +12,9 @@ import '../../features/auth/providers/profile_provider.dart';
 import '../../features/nutrition/presentation/screens/food_search_screen.dart';
 import '../../features/nutrition/presentation/screens/create_custom_food_screen.dart';
 import '../../features/nutrition/presentation/screens/log_meal_screen.dart';
+import '../../features/planner/presentation/screens/weekly_planner_screen.dart';
+import '../../features/recipes/presentation/screens/recipe_editor_screen.dart';
+import '../../features/recipes/presentation/screens/recipe_list_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final client = Supabase.instance.client;
@@ -44,6 +47,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
+      GoRoute(path: '/planner', builder: (_, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return WeeklyPlannerScreen(recipeToSeed: extra);
+      }),
+      GoRoute(path: '/recipes', builder: (_, __) => const RecipeListScreen()),
+      GoRoute(
+        path: '/recipes/new',
+        builder: (_, __) => const RecipeEditorScreen(),
+      ),
       GoRoute(
         path: '/food-search',
         builder: (_, state) {

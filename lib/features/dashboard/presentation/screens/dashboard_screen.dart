@@ -23,6 +23,16 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('FeastForged'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'Weekly planner',
+            onPressed: () => context.push('/planner'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: 'Recipes',
+            onPressed: () => context.push('/recipes'),
+          ),
+          IconButton(
             icon: const Icon(Icons.tune_outlined),
             tooltip: 'Edit targets',
             onPressed: () => context.push('/profile/edit'),

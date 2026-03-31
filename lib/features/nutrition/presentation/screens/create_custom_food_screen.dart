@@ -198,7 +198,7 @@ class _MacroField extends StatelessWidget {
       decoration: InputDecoration(labelText: label, suffixText: suffix),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (value) =>
-          Validators.positiveNumber(value, fieldName: label),
+          Validators.nonNegativeNumber(value, fieldName: label),
     );
   }
 }

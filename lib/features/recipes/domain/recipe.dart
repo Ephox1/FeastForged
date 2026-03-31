@@ -1,231 +1,166 @@
 import 'package:flutter/foundation.dart';
 
-enum RecipeMealType {
-  breakfast,
-  lunch,
-  dinner,
-  snack;
-
-  String get label => switch (this) {
-    RecipeMealType.breakfast => 'Breakfast',
-    RecipeMealType.lunch => 'Lunch',
-    RecipeMealType.dinner => 'Dinner',
-    RecipeMealType.snack => 'Snack',
-  };
-}
-
-enum RecipeDifficulty { easy, medium, hard }
-
-enum RecipeSource {
-  manual,
-  aiGenerated,
-  aiImported,
-  community;
-
-  String get databaseValue => switch (this) {
-    RecipeSource.manual => 'manual',
-    RecipeSource.aiGenerated => 'ai_generated',
-    RecipeSource.aiImported => 'ai_imported',
-    RecipeSource.community => 'community',
-  };
-
-  static RecipeSource fromDatabaseValue(String? value) => switch (value) {
-    'ai_generated' => RecipeSource.aiGenerated,
-    'ai_imported' => RecipeSource.aiImported,
-    'community' => RecipeSource.community,
-    _ => RecipeSource.manual,
-  };
-}
-
 @immutable
 class RecipeIngredient {
   const RecipeIngredient({
     required this.name,
-    required this.quantity,
-    required this.unit,
+    this.quantity,
+    this.unit,
     this.category,
   });
 
   final String name;
-  final double quantity;
-  final String unit;
+  final double? quantity;
+  final String? unit;
   final String? category;
 
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) =>
       RecipeIngredient(
         name: json['name'] as String? ?? '',
-        quantity: (json['quantity'] as num? ?? 0).toDouble(),
-        unit: json['unit'] as String? ?? '',
+        quantity: (json['quantity'] as num?)?.toDouble(),
+        unit: json['unit'] as String?,
         category: json['category'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
     'name': name,
-    'quantity': quantity,
-    'unit': unit,
+    if (quantity != null) 'quantity': quantity,
+    if (unit != null) 'unit': unit,
     if (category != null) 'category': category,
   };
-}
-
-@immutable
-class RecipeInstruction {
-  const RecipeInstruction({required this.step, required this.text});
-
-  final int step;
-  final String text;
-
-  factory RecipeInstruction.fromJson(Map<String, dynamic> json) =>
-      RecipeInstruction(
-        step: json['step'] as int? ?? 0,
-        text: json['text'] as String? ?? '',
-      );
-
-  Map<String, dynamic> toJson() => {'step': step, 'text': text};
 }
 
 @immutable
 class Recipe {
   const Recipe({
     required this.id,
-    required this.ownerId,
+    required this.createdBy,
     required this.title,
     this.description,
-    this.cuisine,
-    required this.mealType,
-    this.difficulty = RecipeDifficulty.medium,
+    this.imageUrl,
     this.prepTimeMinutes = 0,
     this.cookTimeMinutes = 0,
-    this.servings = 4,
-    this.caloriesPerServing = 0,
-    this.proteinPerServing = 0,
-    this.carbsPerServing = 0,
-    this.fatPerServing = 0,
-    this.totalBatchWeightGrams,
+    this.servings = 1,
+    this.calories = 0,
+    this.proteinG = 0,
+    this.carbsG = 0,
+    this.fatG = 0,
     this.ingredients = const [],
     this.instructions = const [],
     this.tags = const [],
-    this.imageUrl,
-    this.source = RecipeSource.manual,
-    this.sourceUrl,
-    this.isPublished = false,
-    this.publishedAt,
-    this.timesCooked = 0,
-    this.lastCookedAt,
-    this.isFavorite = false,
+    this.isCommunity = false,
+    this.isPublic = false,
+    this.downloads = 0,
     required this.createdAt,
     this.updatedAt,
   });
 
   final String id;
-  final String ownerId;
+  final String createdBy;
   final String title;
   final String? description;
-  final String? cuisine;
-  final RecipeMealType mealType;
-  final RecipeDifficulty difficulty;
+  final String? imageUrl;
   final int prepTimeMinutes;
   final int cookTimeMinutes;
   final int servings;
-  final double caloriesPerServing;
-  final double proteinPerServing;
-  final double carbsPerServing;
-  final double fatPerServing;
-  final double? totalBatchWeightGrams;
+  final double calories;
+  final double proteinG;
+  final double carbsG;
+  final double fatG;
   final List<RecipeIngredient> ingredients;
-  final List<RecipeInstruction> instructions;
+  final List<String> instructions;
   final List<String> tags;
-  final String? imageUrl;
-  final RecipeSource source;
-  final String? sourceUrl;
-  final bool isPublished;
-  final DateTime? publishedAt;
-  final int timesCooked;
-  final DateTime? lastCookedAt;
-  final bool isFavorite;
+  final bool isCommunity;
+  final bool isPublic;
+  final int downloads;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
-  double get caloriesTotal => caloriesPerServing * servings;
-  double get proteinTotal => proteinPerServing * servings;
-  double get carbsTotal => carbsPerServing * servings;
-  double get fatTotal => fatPerServing * servings;
+  double get caloriesPerServing => servings == 0 ? 0 : calories / servings;
+  double get proteinPerServing => servings == 0 ? 0 : proteinG / servings;
+  double get carbsPerServing => servings == 0 ? 0 : carbsG / servings;
+  double get fatPerServing => servings == 0 ? 0 : fatG / servings;
 
-  factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
-    id: json['id'] as String,
-    ownerId: json['owner_id'] as String,
-    title: json['title'] as String? ?? '',
-    description: json['description'] as String?,
-    cuisine: json['cuisine'] as String?,
-    mealType: RecipeMealType.values.firstWhere(
-      (value) => value.name == (json['meal_type'] as String? ?? 'dinner'),
-      orElse: () => RecipeMealType.dinner,
-    ),
-    difficulty: RecipeDifficulty.values.firstWhere(
-      (value) => value.name == (json['difficulty'] as String? ?? 'medium'),
-      orElse: () => RecipeDifficulty.medium,
-    ),
-    prepTimeMinutes: json['prep_time_minutes'] as int? ?? 0,
-    cookTimeMinutes: json['cook_time_minutes'] as int? ?? 0,
-    servings: json['servings'] as int? ?? 4,
-    caloriesPerServing: (json['calories_per_serving'] as num? ?? 0).toDouble(),
-    proteinPerServing: (json['protein_per_serving'] as num? ?? 0).toDouble(),
-    carbsPerServing: (json['carbs_per_serving'] as num? ?? 0).toDouble(),
-    fatPerServing: (json['fat_per_serving'] as num? ?? 0).toDouble(),
-    totalBatchWeightGrams: (json['total_batch_weight_grams'] as num?)
-        ?.toDouble(),
-    ingredients: ((json['ingredients'] as List?) ?? const [])
-        .map((item) => RecipeIngredient.fromJson(item as Map<String, dynamic>))
-        .toList(),
-    instructions: ((json['instructions'] as List?) ?? const [])
-        .map((item) => RecipeInstruction.fromJson(item as Map<String, dynamic>))
-        .toList(),
-    tags: ((json['tags'] as List?) ?? const []).cast<String>(),
-    imageUrl: json['image_url'] as String?,
-    source: RecipeSource.fromDatabaseValue(json['source'] as String?),
-    sourceUrl: json['source_url'] as String?,
-    isPublished: json['is_published'] as bool? ?? false,
-    publishedAt: json['published_at'] != null
-        ? DateTime.parse(json['published_at'] as String)
-        : null,
-    timesCooked: json['times_cooked'] as int? ?? 0,
-    lastCookedAt: json['last_cooked_at'] != null
-        ? DateTime.parse(json['last_cooked_at'] as String)
-        : null,
-    isFavorite: json['is_favorite'] as bool? ?? false,
-    createdAt: DateTime.parse(json['created_at'] as String),
-    updatedAt: json['updated_at'] != null
-        ? DateTime.parse(json['updated_at'] as String)
-        : null,
-  );
+  factory Recipe.fromJson(Map<String, dynamic> json) {
+    final instructionsValue = json['instructions'];
+    final ingredientsValue = json['ingredients'];
+
+    return Recipe(
+      id: json['id'] as String,
+      createdBy:
+          json['created_by'] as String? ??
+          json['owner_id'] as String? ??
+          '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String?,
+      imageUrl: json['image_url'] as String?,
+      prepTimeMinutes: json['prep_time_minutes'] as int? ?? 0,
+      cookTimeMinutes: json['cook_time_minutes'] as int? ?? 0,
+      servings: json['servings'] as int? ?? 1,
+      calories:
+          (json['calories'] as num?)?.toDouble() ??
+          ((json['calories_per_serving'] as num?)?.toDouble() ?? 0) *
+              (json['servings'] as int? ?? 1),
+      proteinG:
+          (json['protein_g'] as num?)?.toDouble() ??
+          ((json['protein_per_serving'] as num?)?.toDouble() ?? 0) *
+              (json['servings'] as int? ?? 1),
+      carbsG:
+          (json['carbs_g'] as num?)?.toDouble() ??
+          ((json['carbs_per_serving'] as num?)?.toDouble() ?? 0) *
+              (json['servings'] as int? ?? 1),
+      fatG:
+          (json['fat_g'] as num?)?.toDouble() ??
+          ((json['fat_per_serving'] as num?)?.toDouble() ?? 0) *
+              (json['servings'] as int? ?? 1),
+      ingredients: ingredientsValue is List
+          ? ingredientsValue
+                .map(
+                  (item) => RecipeIngredient.fromJson(
+                    item as Map<String, dynamic>,
+                  ),
+                )
+                .toList()
+          : const [],
+      instructions: instructionsValue is List
+          ? instructionsValue.map((item) => item.toString()).toList()
+          : const [],
+      tags: ((json['tags'] as List?) ?? const []).cast<String>(),
+      isCommunity:
+          json['is_community'] as bool? ??
+          ((json['source'] as String?) == 'community'),
+      isPublic:
+          json['is_public'] as bool? ?? json['is_published'] as bool? ?? false,
+      downloads:
+          json['downloads'] as int? ?? json['times_cooked'] as int? ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now().toUtc(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'owner_id': ownerId,
+    'created_by': createdBy,
     'title': title,
     if (description != null) 'description': description,
-    if (cuisine != null) 'cuisine': cuisine,
-    'meal_type': mealType.name,
-    'difficulty': difficulty.name,
+    if (imageUrl != null) 'image_url': imageUrl,
     'prep_time_minutes': prepTimeMinutes,
     'cook_time_minutes': cookTimeMinutes,
     'servings': servings,
-    'calories_per_serving': caloriesPerServing,
-    'protein_per_serving': proteinPerServing,
-    'carbs_per_serving': carbsPerServing,
-    'fat_per_serving': fatPerServing,
-    if (totalBatchWeightGrams != null)
-      'total_batch_weight_grams': totalBatchWeightGrams,
+    'calories': calories,
+    'protein_g': proteinG,
+    'carbs_g': carbsG,
+    'fat_g': fatG,
     'ingredients': ingredients.map((item) => item.toJson()).toList(),
-    'instructions': instructions.map((item) => item.toJson()).toList(),
+    'instructions': instructions,
     'tags': tags,
-    if (imageUrl != null) 'image_url': imageUrl,
-    'source': source.databaseValue,
-    if (sourceUrl != null) 'source_url': sourceUrl,
-    'is_published': isPublished,
-    if (publishedAt != null) 'published_at': publishedAt!.toIso8601String(),
-    'times_cooked': timesCooked,
-    if (lastCookedAt != null) 'last_cooked_at': lastCookedAt!.toIso8601String(),
-    'is_favorite': isFavorite,
+    'is_community': isCommunity,
+    'is_public': isPublic,
+    'downloads': downloads,
     'created_at': createdAt.toIso8601String(),
     if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
   };

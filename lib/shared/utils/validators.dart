@@ -32,4 +32,12 @@ class Validators {
     if (number <= 0) return '$fieldName must be greater than 0';
     return null;
   }
+
+  static String? nonNegativeNumber(String? value, {String fieldName = 'Value'}) {
+    if (value == null || value.trim().isEmpty) return '$fieldName is required';
+    final number = double.tryParse(value.trim());
+    if (number == null) return 'Enter a valid number';
+    if (number < 0) return '$fieldName cannot be negative';
+    return null;
+  }
 }

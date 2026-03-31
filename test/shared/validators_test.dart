@@ -20,4 +20,10 @@ void main() {
       );
     });
   });
+
+  group('Validators.nonNegativeNumber', () {
+    test('allows zero', () {
+      expect(Validators.nonNegativeNumber('0', fieldName: 'Protein'), isNull);
+    });
+  });
 }
