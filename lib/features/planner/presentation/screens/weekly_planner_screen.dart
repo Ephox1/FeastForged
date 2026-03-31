@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../shared/utils/error_messages.dart';
+import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../../recipes/domain/recipe.dart';
 import '../../../recipes/providers/recipe_provider.dart';
 import '../../domain/meal_plan.dart';
@@ -225,11 +227,30 @@ class _PlannerDayCard extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(entry.recipe?.title ?? 'Recipe'),
                 subtitle: Text(
-                  '${entry.mealType.label} • ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
+                  '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () => onDelete(entry.id),
+                trailing: Wrap(
+                  spacing: 8,
+                  children: [
+                    if (entry.recipe != null && _isToday(dayOfWeek))
+                      IconButton(
+                        icon: const Icon(Icons.check_circle_outline),
+                        tooltip: 'Log as eaten',
+                        onPressed: () => context.push(
+                          '/log-meal',
+                          extra: {
+                            'recipe': entry.recipe!.toJson(),
+                            'mealType': _mealTypeFor(entry.mealType).name,
+                            'mealPlanEntryId': entry.id,
+                            'servings': entry.servings,
+                          },
+                        ),
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => onDelete(entry.id),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -277,4 +298,13 @@ class _PlannerDayCard extends StatelessWidget {
       },
     );
   }
+
+  bool _isToday(int plannerDayOfWeek) => DateTime.now().weekday - 1 == plannerDayOfWeek;
+
+  MealType _mealTypeFor(PlannerMealType mealType) => switch (mealType) {
+    PlannerMealType.breakfast => MealType.breakfast,
+    PlannerMealType.lunch => MealType.lunch,
+    PlannerMealType.dinner => MealType.dinner,
+    PlannerMealType.snack => MealType.snack,
+  };
 }

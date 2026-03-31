@@ -24,6 +24,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
   Recipe? _recipe;
   String? _mealPlanEntryId;
   MealType _mealType = MealType.other;
+  double _initialServings = 1;
 
   @override
   void initState() {
@@ -41,10 +42,14 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
     try {
       _recipe = Recipe.fromJson(recipeJson);
       _mealPlanEntryId = data['mealPlanEntryId'] as String?;
+      _initialServings = (data['servings'] as num?)?.toDouble() ?? 1;
       _mealType = MealType.values.firstWhere(
         (e) => e.name == (data['mealType'] as String? ?? 'other'),
         orElse: () => MealType.other,
       );
+      _servingsController.text = _initialServings % 1 == 0
+          ? _initialServings.toInt().toString()
+          : _initialServings.toString();
     } catch (_) {
       _recipe = null;
     }

@@ -214,4 +214,18 @@ class CommunityRepository {
       'content': content.trim(),
     });
   }
+
+  Future<void> updateReview({
+    required String reviewId,
+    required String content,
+  }) async {
+    await supabase
+        .from('community_reviews')
+        .update({'content': content.trim()})
+        .eq('id', reviewId);
+  }
+
+  Future<void> deleteReview(String reviewId) async {
+    await supabase.from('community_reviews').delete().eq('id', reviewId);
+  }
 }

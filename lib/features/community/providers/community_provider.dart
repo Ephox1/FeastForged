@@ -59,6 +59,33 @@ class _CommunityActionNotifier extends AsyncNotifier<void> {
       ref.invalidate(recipeDetailProvider(recipeId));
     });
   }
+
+  Future<void> updateReview({
+    required String recipeId,
+    required String reviewId,
+    required String content,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref
+          .read(communityRepositoryProvider)
+          .updateReview(reviewId: reviewId, content: content);
+      ref.invalidate(communityRecipesProvider);
+      ref.invalidate(recipeDetailProvider(recipeId));
+    });
+  }
+
+  Future<void> deleteReview({
+    required String recipeId,
+    required String reviewId,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(communityRepositoryProvider).deleteReview(reviewId);
+      ref.invalidate(communityRecipesProvider);
+      ref.invalidate(recipeDetailProvider(recipeId));
+    });
+  }
 }
 
 final communityActionProvider =

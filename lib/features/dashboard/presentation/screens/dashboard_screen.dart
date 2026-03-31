@@ -325,8 +325,22 @@ class _PlannerSummaryCard extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             title: Text(entry.recipe?.title ?? 'Recipe'),
                             subtitle: Text(
-                              '${entry.servings} serving${entry.servings == 1 ? '' : 's'} • ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
+                              '${entry.servings} serving${entry.servings == 1 ? '' : 's'} | ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
                             ),
+                            trailing: entry.recipe == null
+                                ? null
+                                : FilledButton.tonal(
+                                    onPressed: () => context.push(
+                                      '/log-meal',
+                                      extra: {
+                                        'recipe': entry.recipe!.toJson(),
+                                        'mealType': _mealTypeFor(entry.mealType).name,
+                                        'mealPlanEntryId': entry.id,
+                                        'servings': entry.servings,
+                                      },
+                                    ),
+                                    child: const Text('Log'),
+                                  ),
                           ),
                         ),
                       ],
@@ -338,6 +352,13 @@ class _PlannerSummaryCard extends StatelessWidget {
       ),
     );
   }
+
+  MealType _mealTypeFor(PlannerMealType mealType) => switch (mealType) {
+    PlannerMealType.breakfast => MealType.breakfast,
+    PlannerMealType.lunch => MealType.lunch,
+    PlannerMealType.dinner => MealType.dinner,
+    PlannerMealType.snack => MealType.snack,
+  };
 }
 
 class _LoggedFoodsCard extends StatelessWidget {

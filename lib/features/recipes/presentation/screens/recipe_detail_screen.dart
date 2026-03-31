@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../shared/utils/error_messages.dart';
 import '../../../../shared/utils/validators.dart';
@@ -36,6 +37,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(recipeDetailProvider(widget.recipeId));
     final actionState = ref.watch(communityActionProvider);
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
 
     ref.listen(communityActionProvider, (_, next) {
       if (next is AsyncError) {
@@ -84,7 +86,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     label:
                         '${detail.stats.averageRating.toStringAsFixed(1)} avg rating',
                   ),
+                  _Badge(label: '${detail.stats.totalRatings} ratings'),
+                  _Badge(label: '${detail.stats.totalReviews} reviews'),
                   _Badge(label: '${detail.stats.totalSaves} saves'),
+                  if (recipe.isPublic) const _Badge(label: 'Public'),
                 ],
               ),
               const SizedBox(height: 20),
@@ -274,9 +279,42 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                   padding: const EdgeInsets.only(top: 6),
                                   child: Text(review.content),
                                 ),
-                                trailing: Text(
-                                  '${review.createdAt.month}/${review.createdAt.day}',
-                                ),
+                                trailing: review.userId == currentUserId
+                                    ? PopupMenuButton<String>(
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            await _showEditReviewDialog(
+                                              context,
+                                              recipe.id,
+                                              review.id,
+                                              review.content,
+                                            );
+                                          } else if (value == 'delete') {
+                                            await ref
+                                                .read(
+                                                  communityActionProvider
+                                                      .notifier,
+                                                )
+                                                .deleteReview(
+                                                  recipeId: recipe.id,
+                                                  reviewId: review.id,
+                                                );
+                                          }
+                                        },
+                                        itemBuilder: (_) => const [
+                                          PopupMenuItem(
+                                            value: 'edit',
+                                            child: Text('Edit'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'delete',
+                                            child: Text('Delete'),
+                                          ),
+                                        ],
+                                      )
+                                    : Text(
+                                        '${review.createdAt.month}/${review.createdAt.day}',
+                                      ),
                               ),
                             )
                             .toList(),
@@ -287,6 +325,54 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _showEditReviewDialog(
+    BuildContext context,
+    String recipeId,
+    String reviewId,
+    String initialContent,
+  ) async {
+    final controller = TextEditingController(text: initialContent);
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit review'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            minLines: 3,
+            maxLines: 5,
+            validator: (value) =>
+                Validators.required(value, fieldName: 'Review'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              await ref.read(communityActionProvider.notifier).updateReview(
+                recipeId: recipeId,
+                reviewId: reviewId,
+                content: controller.text,
+              );
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    controller.dispose();
   }
 }
 
