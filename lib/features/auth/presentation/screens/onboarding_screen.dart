@@ -92,7 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         );
       }
       if (next is AsyncData && next.value != null) {
-        context.go('/dashboard');
+        context.go('/app/dashboard');
       }
     });
 

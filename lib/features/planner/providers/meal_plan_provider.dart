@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/macro_calculator.dart';
 import '../data/meal_plan_repository.dart';
 import '../domain/meal_plan.dart';
 
@@ -26,6 +27,28 @@ final currentWeekEntriesProvider = FutureProvider<List<MealPlanEntry>>((
   final plan = await ref.watch(currentWeekPlanProvider.future);
   if (plan == null) return [];
   return ref.watch(mealPlanRepositoryProvider).fetchEntries(plan.id);
+});
+
+int plannerDayOfWeekFor(DateTime date) => date.weekday - 1;
+
+final todayPlannedEntriesProvider = Provider<List<MealPlanEntry>>((ref) {
+  final entries = ref.watch(currentWeekEntriesProvider).valueOrNull ?? const [];
+  final dayOfWeek = plannerDayOfWeekFor(DateTime.now());
+  return entries.where((entry) => entry.dayOfWeek == dayOfWeek).toList();
+});
+
+final todayPlannedMacrosProvider = Provider<DailyMacros>((ref) {
+  final entries = ref.watch(todayPlannedEntriesProvider);
+  return calculateDailyTotals(
+    entries.map(
+      (entry) => PortionMacros(
+        calories: (entry.recipe?.caloriesPerServing ?? 0) * entry.servings,
+        protein: (entry.recipe?.proteinPerServing ?? 0) * entry.servings,
+        carbs: (entry.recipe?.carbsPerServing ?? 0) * entry.servings,
+        fat: (entry.recipe?.fatPerServing ?? 0) * entry.servings,
+      ),
+    ),
+  );
 });
 
 class _MealPlanEditorNotifier extends AsyncNotifier<void> {

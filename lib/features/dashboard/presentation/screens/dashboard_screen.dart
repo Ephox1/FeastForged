@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/user_profile.dart';
-import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/utils/macro_calculator.dart';
 import '../../../auth/providers/profile_provider.dart';
 import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../../nutrition/providers/nutrition_provider.dart';
+import '../../../planner/domain/meal_plan.dart';
+import '../../../planner/providers/meal_plan_provider.dart';
 import '../widgets/macro_ring.dart';
 import '../widgets/meal_section.dart';
 
@@ -17,33 +19,11 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(currentProfileProvider);
     final logsAsync = ref.watch(todayLogsProvider);
+    final plannedEntries = ref.watch(todayPlannedEntriesProvider);
+    final plannedMacros = ref.watch(todayPlannedMacrosProvider);
+    final weeklyPlan = ref.watch(currentWeekPlanProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FeastForged'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            tooltip: 'Weekly planner',
-            onPressed: () => context.push('/planner'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.menu_book_outlined),
-            tooltip: 'Recipes',
-            onPressed: () => context.push('/recipes'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.tune_outlined),
-            tooltip: 'Edit targets',
-            onPressed: () => context.push('/profile/edit'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            tooltip: 'Sign out',
-            onPressed: () => ref.read(authNotifierProvider.notifier).signOut(),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/food-search?mealType=other'),
         icon: const Icon(Icons.add),
@@ -53,6 +33,8 @@ class DashboardScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(todayLogsProvider);
           ref.invalidate(currentProfileProvider);
+          ref.invalidate(currentWeekPlanProvider);
+          ref.invalidate(currentWeekEntriesProvider);
           ref.invalidate(popularFoodsProvider);
           ref.invalidate(recentFoodsProvider);
         },
@@ -71,11 +53,17 @@ class DashboardScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error loading logs: $e')),
               data: (logs) {
-                final totals = logs.totals;
-                final hasEntries = logs.isNotEmpty;
+                final loggedTotals = logs.totals;
+                final hasPlannedMeals = plannedEntries.isNotEmpty;
+                final combinedMacros = DailyMacros(
+                  calories: plannedMacros.calories + loggedTotals.calories,
+                  protein: plannedMacros.protein + loggedTotals.protein,
+                  carbs: plannedMacros.carbs + loggedTotals.carbs,
+                  fat: plannedMacros.fat + loggedTotals.fat,
+                );
 
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
                   children: [
                     Text(
                       _todayLabel(),
@@ -85,39 +73,33 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      hasEntries
-                          ? 'You are building momentum today.'
-                          : 'Let’s get today started with one easy meal log.',
+                      hasPlannedMeals
+                          ? 'Today is anchored by your weekly plan.'
+                          : 'Start today with a plan or a quick meal log.',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 18),
-                    _GoalStatusCard(profile: profile, totals: totals),
+                    _GoalStatusCard(profile: profile, totals: combinedMacros),
                     const SizedBox(height: 20),
                     MacroRing(
-                      consumed: totals.calories,
+                      consumed: combinedMacros.calories,
                       target: profile.dailyCalorieTarget.toDouble(),
-                      protein: totals.protein,
+                      protein: combinedMacros.protein,
                       proteinTarget: profile.dailyProteinTarget.toDouble(),
-                      carbs: totals.carbs,
+                      carbs: combinedMacros.carbs,
                       carbsTarget: profile.dailyCarbTarget.toDouble(),
-                      fat: totals.fat,
+                      fat: combinedMacros.fat,
                       fatTarget: profile.dailyFatTarget.toDouble(),
                     ),
                     const SizedBox(height: 20),
-                    if (!hasEntries) ...[
-                      _DashboardEmptyState(profile: profile),
-                      const SizedBox(height: 20),
-                    ],
-                    ...MealType.values.map(
-                      (mealType) => MealSection(
-                        mealType: mealType,
-                        entries: logs.forMealType(mealType),
-                        onAddPressed: () => context.push(
-                          '/food-search?mealType=${mealType.name}',
-                        ),
-                      ),
+                    _PlannerSummaryCard(
+                      profile: profile,
+                      plannedEntries: plannedEntries,
+                      planExists: weeklyPlan.valueOrNull != null,
                     ),
+                    const SizedBox(height: 20),
+                    _LoggedFoodsCard(logs: logs),
                   ],
                 );
               },
@@ -161,7 +143,7 @@ class _GoalStatusCard extends StatelessWidget {
   const _GoalStatusCard({required this.profile, required this.totals});
 
   final UserProfile profile;
-  final DailyTotals totals;
+  final DailyMacros totals;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +166,7 @@ class _GoalStatusCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Today\'s plan',
+            'Today\'s target',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -192,7 +174,7 @@ class _GoalStatusCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             caloriesRemaining >= 0
-                ? '${caloriesRemaining.toInt()} kcal remaining to hit your target'
+                ? '${caloriesRemaining.toInt()} kcal remaining across planned and logged meals'
                 : '${caloriesRemaining.abs().toInt()} kcal over target so far',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
@@ -201,26 +183,16 @@ class _GoalStatusCard extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _TargetPill(
-                label: 'Goal',
-                value: profile.goal.label,
-                icon: Icons.flag_outlined,
-              ),
+              _TargetPill(label: 'Goal', value: profile.goal.label),
               _TargetPill(
                 label: 'Protein',
                 value: '${profile.dailyProteinTarget}g',
-                icon: Icons.fitness_center_outlined,
               ),
               _TargetPill(
                 label: 'Carbs',
                 value: '${profile.dailyCarbTarget}g',
-                icon: Icons.grain_outlined,
               ),
-              _TargetPill(
-                label: 'Fat',
-                value: '${profile.dailyFatTarget}g',
-                icon: Icons.opacity_outlined,
-              ),
+              _TargetPill(label: 'Fat', value: '${profile.dailyFatTarget}g'),
             ],
           ),
         ],
@@ -229,57 +201,149 @@ class _GoalStatusCard extends StatelessWidget {
   }
 }
 
-class _TargetPill extends StatelessWidget {
-  const _TargetPill({
-    required this.label,
-    required this.value,
-    required this.icon,
+class _PlannerSummaryCard extends StatelessWidget {
+  const _PlannerSummaryCard({
+    required this.profile,
+    required this.plannedEntries,
+    required this.planExists,
   });
 
-  final String label;
-  final String value;
-  final IconData icon;
+  final UserProfile profile;
+  final List<MealPlanEntry> plannedEntries;
+  final bool planExists;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          Column(
+    if (!planExists) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                'Weekly planner',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'You do not have a weekly meal plan yet. Create one and the dashboard will use it as the main source for today.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => context.go('/app/planner'),
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: const Text('Open planner'),
+              ),
             ],
           ),
-        ],
+        ),
+      );
+    }
+
+    if (plannedEntries.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Today\'s planned meals',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No recipes are planned for today yet. Add recipes in the planner to turn this into your main dashboard feed.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/app/planner'),
+                icon: const Icon(Icons.add),
+                label: const Text('Plan today'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final grouped = <PlannerMealType, List<MealPlanEntry>>{};
+    for (final entry in plannedEntries) {
+      grouped.putIfAbsent(entry.mealType, () => []).add(entry);
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Today\'s planned meals',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.go('/app/planner'),
+                  child: const Text('Planner'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...PlannerMealType.values
+                .where((mealType) => grouped.containsKey(mealType))
+                .map(
+                  (mealType) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          mealType.label,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        ...grouped[mealType]!.map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(entry.recipe?.title ?? 'Recipe'),
+                            subtitle: Text(
+                              '${entry.servings} serving${entry.servings == 1 ? '' : 's'} • ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DashboardEmptyState extends StatelessWidget {
-  const _DashboardEmptyState({required this.profile});
+class _LoggedFoodsCard extends StatelessWidget {
+  const _LoggedFoodsCard({required this.logs});
 
-  final UserProfile profile;
+  final List<MealLogEntry> logs;
 
   @override
   Widget build(BuildContext context) {
@@ -289,39 +353,75 @@ class _DashboardEmptyState extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'No meals logged yet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start with one simple meal. Your target today is ${profile.dailyCalorieTarget} kcal and we’ll keep the dashboard updated as you go.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            Row(
               children: [
-                FilledButton.icon(
-                  onPressed: () => context.push('/food-search?mealType=breakfast'),
-                  icon: const Icon(Icons.breakfast_dining_outlined),
-                  label: const Text('Log breakfast'),
+                Expanded(
+                  child: Text(
+                    'Logged foods today',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => context.push('/profile/edit'),
-                  icon: const Icon(Icons.tune_outlined),
-                  label: const Text('Adjust targets'),
+                TextButton(
+                  onPressed: () => context.push('/food-search?mealType=other'),
+                  child: const Text('Add'),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            if (logs.isEmpty)
+              Text(
+                'No manual food logs yet today.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ...MealType.values.map(
+              (mealType) => MealSection(
+                mealType: mealType,
+                entries: logs.forMealType(mealType),
+                onAddPressed: () =>
+                    context.push('/food-search?mealType=${mealType.name}'),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TargetPill extends StatelessWidget {
+  const _TargetPill({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

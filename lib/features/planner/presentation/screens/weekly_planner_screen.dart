@@ -21,7 +21,9 @@ class WeeklyPlannerScreen extends ConsumerWidget {
     ref.listen(mealPlanEditorProvider, (_, next) {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorMessages.friendly(next.error))),
+          SnackBar(
+            content: Text(ErrorMessages.friendly(next.error)),
+          ),
         );
       }
     });
