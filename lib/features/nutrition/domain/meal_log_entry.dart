@@ -21,46 +21,49 @@ class MealLogEntry {
   const MealLogEntry({
     required this.id,
     required this.userId,
-    required this.foodItemId,
-    required this.foodName,
+    required this.recipeId,
+    required this.recipeTitle,
     required this.mealType,
-    required this.amountGrams,
+    required this.servings,
     required this.calories,
     required this.protein,
     required this.carbs,
     required this.fat,
     required this.loggedAt,
+    this.mealPlanEntryId,
     this.createdAt,
   });
 
   final String id;
   final String userId;
-  final String foodItemId;
-  final String foodName;
+  final String recipeId;
+  final String recipeTitle;
   final MealType mealType;
-  final double amountGrams;
+  final double servings;
   final double calories;
   final double protein;
   final double carbs;
   final double fat;
   final DateTime loggedAt;
+  final String? mealPlanEntryId;
   final DateTime? createdAt;
 
   factory MealLogEntry.fromJson(Map<String, dynamic> json) => MealLogEntry(
     id: json['id'] as String,
     userId: json['user_id'] as String,
-    foodItemId: json['food_item_id'] as String? ?? '',
-    foodName: json['food_name'] as String,
+    recipeId: json['recipe_id'] as String,
+    recipeTitle: json['recipe_title'] as String,
     mealType: MealType.values.firstWhere(
-      (e) => e.name == (json['meal_type'] as String),
+      (e) => e.name == (json['meal_type'] as String? ?? 'other'),
       orElse: () => MealType.other,
     ),
-    amountGrams: (json['amount_grams'] as num).toDouble(),
-    calories: (json['calories'] as num).toDouble(),
-    protein: (json['protein'] as num? ?? 0).toDouble(),
-    carbs: (json['carbs'] as num? ?? 0).toDouble(),
-    fat: (json['fat'] as num? ?? 0).toDouble(),
+    servings: (json['servings'] as num? ?? 1).toDouble(),
+    calories: (json['calories'] as num? ?? 0).toDouble(),
+    protein: ((json['protein_g'] ?? json['protein']) as num? ?? 0).toDouble(),
+    carbs: ((json['carbs_g'] ?? json['carbs']) as num? ?? 0).toDouble(),
+    fat: ((json['fat_g'] ?? json['fat']) as num? ?? 0).toDouble(),
     loggedAt: DateTime.parse(json['logged_at'] as String),
+    mealPlanEntryId: json['meal_plan_entry_id'] as String?,
     createdAt: json['created_at'] != null
         ? DateTime.parse(json['created_at'] as String)
         : null,
@@ -69,14 +72,15 @@ class MealLogEntry {
   Map<String, dynamic> toJson() => {
     'id': id,
     'user_id': userId,
-    'food_item_id': foodItemId.isNotEmpty ? foodItemId : null,
-    'food_name': foodName,
+    'recipe_id': recipeId,
+    'recipe_title': recipeTitle,
+    if (mealPlanEntryId != null) 'meal_plan_entry_id': mealPlanEntryId,
     'meal_type': mealType.name,
-    'amount_grams': amountGrams,
+    'servings': servings,
     'calories': calories,
-    'protein': protein,
-    'carbs': carbs,
-    'fat': fat,
+    'protein_g': protein,
+    'carbs_g': carbs,
+    'fat_g': fat,
     'logged_at': loggedAt.toIso8601String(),
     'created_at': (createdAt ?? DateTime.now().toUtc()).toIso8601String(),
   };

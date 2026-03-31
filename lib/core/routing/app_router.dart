@@ -17,6 +17,7 @@ import '../../features/nutrition/presentation/screens/log_meal_screen.dart';
 import '../../features/planner/presentation/screens/weekly_planner_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/recipes/presentation/screens/recipe_editor_screen.dart';
+import '../../features/recipes/presentation/screens/recipe_detail_screen.dart';
 import '../../features/recipes/presentation/screens/recipe_list_screen.dart';
 import '../../features/shopping/presentation/screens/shopping_lists_screen.dart';
 import 'app_shell.dart';
@@ -81,6 +82,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/recipes/new',
         builder: (_, __) => const RecipeEditorScreen(),
+      ),
+      GoRoute(
+        path: '/recipes/:recipeId',
+        builder: (_, state) => RecipeDetailScreen(
+          recipeId: state.pathParameters['recipeId']!,
+          initialRecipe: state.extra as dynamic,
+        ),
       ),
       GoRoute(
         path: '/food-search',

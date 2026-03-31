@@ -42,7 +42,7 @@ class MealSection extends ConsumerWidget {
             ),
             trailing: IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              tooltip: 'Add food',
+              tooltip: 'Add recipe',
               onPressed: onAddPressed,
             ),
           ),
@@ -66,7 +66,7 @@ class MealSection extends ConsumerWidget {
                     TextButton.icon(
                       onPressed: onAddPressed,
                       icon: const Icon(Icons.add),
-                      label: const Text('Add food'),
+                      label: const Text('Add recipe'),
                     ),
                   ],
                 ),
@@ -87,8 +87,10 @@ class _FoodLogTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
-      title: Text(entry.foodName),
-      subtitle: Text('${entry.amountGrams.toInt()}g'),
+      title: Text(entry.recipeTitle),
+      subtitle: Text(
+        '${entry.servings.toStringAsFixed(entry.servings % 1 == 0 ? 0 : 1)} servings',
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

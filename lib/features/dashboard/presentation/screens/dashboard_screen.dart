@@ -27,7 +27,7 @@ class DashboardScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/food-search?mealType=other'),
         icon: const Icon(Icons.add),
-        label: const Text('Log food'),
+        label: const Text('Log recipe'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -75,7 +75,7 @@ class DashboardScreen extends ConsumerWidget {
                     Text(
                       hasPlannedMeals
                           ? 'Today is anchored by your weekly plan.'
-                          : 'Start today with a plan or a quick meal log.',
+                          : 'Start today with a plan or a quick recipe log.',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -357,7 +357,7 @@ class _LoggedFoodsCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Logged foods today',
+                    'Logged recipes today',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -372,7 +372,7 @@ class _LoggedFoodsCard extends StatelessWidget {
             const SizedBox(height: 12),
             if (logs.isEmpty)
               Text(
-                'No manual food logs yet today.',
+                'No manual recipe logs yet today.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

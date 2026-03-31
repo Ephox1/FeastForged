@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/food_item.dart';
+import '../../../recipes/domain/recipe.dart';
 import '../../domain/meal_log_entry.dart';
 import '../../providers/nutrition_provider.dart';
 
@@ -51,8 +51,8 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(foodSearchProvider);
-    final recentFoods = ref.watch(recentFoodsProvider);
-    final popularFoods = ref.watch(popularFoodsProvider);
+    final recentRecipes = ref.watch(recentFoodsProvider);
+    final popularRecipes = ref.watch(popularFoodsProvider);
     final showSuggestions = _searchController.text.trim().isEmpty;
 
     return Scaffold(
@@ -65,7 +65,7 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
               children: [
                 SearchBar(
                   controller: _searchController,
-                  hintText: 'Search foods...',
+                  hintText: 'Search recipes and quick-add staples...',
                   leading: const Icon(Icons.search),
                   trailing: [
                     if (_searchController.text.isNotEmpty)
@@ -82,8 +82,8 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                     Expanded(
                       child: Text(
                         showSuggestions
-                            ? 'Start with recents, popular foods, or add your own.'
-                            : 'Tap a result to choose the amount and meal.',
+                            ? 'Start with recents, planner-friendly recipes, or create a quick custom item.'
+                            : 'Tap a recipe to log servings and meal type.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -95,7 +95,7 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                         '/food-search/custom?mealType=${_mealType.name}',
                       ),
                       icon: const Icon(Icons.add_circle_outline),
-                      label: const Text('Custom'),
+                      label: const Text('Quick add'),
                     ),
                   ],
                 ),
@@ -112,23 +112,23 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       children: [
-                        _FoodSection(
-                          title: 'Recent foods',
-                          subtitle: 'Quick re-logs for foods you use often.',
-                          foodsAsync: recentFoods,
+                        _RecipeSection(
+                          title: 'Recent recipes',
+                          subtitle: 'Fast re-logs for meals you actually use.',
+                          recipesAsync: recentRecipes,
                           mealType: _mealType,
                           emptyMessage:
-                              'Your recent foods will show up here after your first few logs.',
+                              'Your recent recipes will show up here after your first few logs.',
                         ),
                         const SizedBox(height: 20),
-                        _FoodSection(
-                          title: 'Popular starters',
+                        _RecipeSection(
+                          title: 'Popular picks',
                           subtitle:
-                              'A simple list of dependable basics to help you get moving.',
-                          foodsAsync: popularFoods,
+                              'Public recipes and your own staples, ordered for quick action.',
+                          recipesAsync: popularRecipes,
                           mealType: _mealType,
                           emptyMessage:
-                              'No starter foods are available yet in this environment.',
+                              'No recipe starters are available yet in this environment.',
                         ),
                       ],
                     ),
@@ -137,8 +137,8 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Center(child: Text('Search error: $e')),
-                    data: (foods) {
-                      if (foods.isEmpty) {
+                    data: (recipes) {
+                      if (recipes.isEmpty) {
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -148,13 +148,13 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                                 const Icon(Icons.search_off, size: 48),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'No foods found for "${_searchController.text}"',
+                                  'No recipes found for "${_searchController.text}"',
                                   style: Theme.of(context).textTheme.bodyLarge,
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Try a simpler search or add it as a custom food.',
+                                  'Try a simpler search or create a quick custom item.',
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: Theme.of(context)
@@ -170,12 +170,12 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                       }
 
                       return ListView.separated(
-                        itemCount: foods.length,
+                        itemCount: recipes.length,
                         separatorBuilder: (_, __) =>
                             const Divider(height: 1, indent: 16),
                         itemBuilder: (context, index) {
-                          final food = foods[index];
-                          return _FoodTile(food: food, mealType: _mealType);
+                          final recipe = recipes[index];
+                          return _RecipeTile(recipe: recipe, mealType: _mealType);
                         },
                       );
                     },
@@ -187,18 +187,18 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
   }
 }
 
-class _FoodSection extends StatelessWidget {
-  const _FoodSection({
+class _RecipeSection extends StatelessWidget {
+  const _RecipeSection({
     required this.title,
     required this.subtitle,
-    required this.foodsAsync,
+    required this.recipesAsync,
     required this.mealType,
     required this.emptyMessage,
   });
 
   final String title;
   final String subtitle;
-  final AsyncValue<List<FoodItem>> foodsAsync;
+  final AsyncValue<List<Recipe>> recipesAsync;
   final MealType mealType;
   final String emptyMessage;
 
@@ -221,17 +221,17 @@ class _FoodSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        foodsAsync.when(
+        recipesAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text('Could not load foods: $e'),
+            child: Text('Could not load recipes: $e'),
           ),
-          data: (foods) {
-            if (foods.isEmpty) {
+          data: (recipes) {
+            if (recipes.isEmpty) {
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -247,11 +247,11 @@ class _FoodSection extends StatelessWidget {
             }
 
             return Column(
-              children: foods
+              children: recipes
                   .map(
-                    (food) => Card(
+                    (recipe) => Card(
                       margin: const EdgeInsets.only(bottom: 10),
-                      child: _FoodTile(food: food, mealType: mealType),
+                      child: _RecipeTile(recipe: recipe, mealType: mealType),
                     ),
                   )
                   .toList(),
@@ -263,43 +263,45 @@ class _FoodSection extends StatelessWidget {
   }
 }
 
-class _FoodTile extends StatelessWidget {
-  const _FoodTile({required this.food, required this.mealType});
+class _RecipeTile extends StatelessWidget {
+  const _RecipeTile({required this.recipe, required this.mealType});
 
-  final FoodItem food;
+  final Recipe recipe;
   final MealType mealType;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(food.name),
+      title: Text(recipe.title),
       subtitle: Text(
-        food.brand == null
-            ? food.isCustom
-                  ? 'Custom food'
-                  : 'Per 100g entry'
-            : food.brand!,
+        recipe.description?.isNotEmpty == true
+            ? recipe.description!
+            : recipe.isPublic
+            ? 'Public recipe'
+            : 'Private recipe',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '${food.caloriesPer100g.toInt()} kcal',
+            '${recipe.caloriesPerServing.toInt()} kcal',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           Text(
-            '${food.proteinPer100g.toStringAsFixed(0)}p • ${food.carbsPer100g.toStringAsFixed(0)}c • ${food.fatPer100g.toStringAsFixed(0)}f',
+            '${recipe.proteinPerServing.toStringAsFixed(0)}p | ${recipe.carbsPerServing.toStringAsFixed(0)}c | ${recipe.fatPerServing.toStringAsFixed(0)}f',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
       onTap: () => context.push(
         '/log-meal',
-        extra: {'food': food.toJson(), 'mealType': mealType.name},
+        extra: {'recipe': recipe.toJson(), 'mealType': mealType.name},
       ),
     );
   }

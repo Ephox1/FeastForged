@@ -27,7 +27,7 @@ class _CreateCustomFoodScreenState
   final _proteinController = TextEditingController(text: '0');
   final _carbsController = TextEditingController(text: '0');
   final _fatController = TextEditingController(text: '0');
-  final _servingController = TextEditingController(text: '100');
+  final _servingsController = TextEditingController(text: '1');
 
   MealType get _mealType => MealType.values.firstWhere(
     (value) => value.name == widget.mealType,
@@ -42,7 +42,7 @@ class _CreateCustomFoodScreenState
     _proteinController.dispose();
     _carbsController.dispose();
     _fatController.dispose();
-    _servingController.dispose();
+    _servingsController.dispose();
     super.dispose();
   }
 
@@ -54,17 +54,17 @@ class _CreateCustomFoodScreenState
         .createCustomFood(
           name: _nameController.text,
           brand: _brandController.text,
-          caloriesPer100g: double.parse(_caloriesController.text.trim()),
-          proteinPer100g: double.parse(_proteinController.text.trim()),
-          carbsPer100g: double.parse(_carbsController.text.trim()),
-          fatPer100g: double.parse(_fatController.text.trim()),
-          defaultServingGrams: double.parse(_servingController.text.trim()),
+          caloriesPerServing: double.parse(_caloriesController.text.trim()),
+          proteinPerServing: double.parse(_proteinController.text.trim()),
+          carbsPerServing: double.parse(_carbsController.text.trim()),
+          fatPerServing: double.parse(_fatController.text.trim()),
+          defaultServings: double.parse(_servingsController.text.trim()),
         );
 
     if (!mounted || created == null) return;
     context.pushReplacement(
       '/log-meal',
-      extra: {'food': created.toJson(), 'mealType': _mealType.name},
+      extra: {'recipe': created.toJson(), 'mealType': _mealType.name},
     );
   }
 
@@ -81,7 +81,7 @@ class _CreateCustomFoodScreenState
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create custom food')),
+      appBar: AppBar(title: const Text('Create quick item')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -91,14 +91,14 @@ class _CreateCustomFoodScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Add something not in the database yet',
+                  'Add a quick custom recipe',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter nutrition per 100g so your logs stay accurate.',
+                  'This saves a private recipe-style item so it fits the live Supabase model.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -107,11 +107,11 @@ class _CreateCustomFoodScreenState
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Food name',
+                    labelText: 'Item name',
                     prefixIcon: Icon(Icons.restaurant_menu_outlined),
                   ),
                   validator: (value) =>
-                      Validators.required(value, fieldName: 'Food name'),
+                      Validators.required(value, fieldName: 'Item name'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -123,9 +123,9 @@ class _CreateCustomFoodScreenState
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: _servingController,
+                  controller: _servingsController,
                   decoration: const InputDecoration(
-                    labelText: 'Default serving (g)',
+                    labelText: 'Default servings',
                     prefixIcon: Icon(Icons.scale_outlined),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -133,12 +133,12 @@ class _CreateCustomFoodScreenState
                   ),
                   validator: (value) => Validators.positiveNumber(
                     value,
-                    fieldName: 'Default serving',
+                    fieldName: 'Default servings',
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Nutrition per 100g',
+                  'Nutrition per serving',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),

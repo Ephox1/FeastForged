@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/utils/error_messages.dart';
 import '../../../../shared/utils/validators.dart';
 import '../../../../shared/widgets/loading_button.dart';
-import '../../domain/food_item.dart';
+import '../../../recipes/domain/recipe.dart';
 import '../../domain/meal_log_entry.dart';
 import '../../providers/nutrition_provider.dart';
 
@@ -20,64 +20,62 @@ class LogMealScreen extends ConsumerStatefulWidget {
 
 class _LogMealScreenState extends ConsumerState<LogMealScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  FoodItem? _food;
+  final _servingsController = TextEditingController(text: '1');
+  Recipe? _recipe;
+  String? _mealPlanEntryId;
   MealType _mealType = MealType.other;
 
   @override
   void initState() {
     super.initState();
-    _loadFood();
+    _loadRecipe();
   }
 
-  void _loadFood() {
+  void _loadRecipe() {
     final data = widget.foodData;
     if (data == null) return;
 
-    final foodJson = data['food'];
-    if (foodJson is! Map<String, dynamic>) return;
+    final recipeJson = data['recipe'];
+    if (recipeJson is! Map<String, dynamic>) return;
 
     try {
-      final parsedFood = FoodItem.fromJson(foodJson);
-      _food = parsedFood;
+      _recipe = Recipe.fromJson(recipeJson);
+      _mealPlanEntryId = data['mealPlanEntryId'] as String?;
       _mealType = MealType.values.firstWhere(
         (e) => e.name == (data['mealType'] as String? ?? 'other'),
         orElse: () => MealType.other,
       );
-      _amountController.text = parsedFood.defaultServingGrams.toStringAsFixed(0);
     } catch (_) {
-      _food = null;
+      _recipe = null;
     }
   }
 
   @override
   void dispose() {
-    _amountController.dispose();
+    _servingsController.dispose();
     super.dispose();
   }
 
-  double get _amount =>
-      double.tryParse(_amountController.text.trim()) ??
-      (_food?.defaultServingGrams ?? 100);
+  double get _servings =>
+      double.tryParse(_servingsController.text.trim()) ?? 1;
 
-  List<double> _servingShortcuts(FoodItem food) {
-    final defaultServing = food.defaultServingGrams;
-    final values = <double>{50, 100, 150, 200, defaultServing};
-    return values.where((value) => value > 0).toList()..sort();
-  }
+  List<double> get _servingShortcuts => const [0.5, 1, 1.5, 2, 3];
 
   Future<void> _submit() async {
-    final food = _food;
-    if (food == null) return;
+    final recipe = _recipe;
+    if (recipe == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref
-        .read(mealLoggerProvider.notifier)
-        .logFood(food: food, amountGrams: _amount, mealType: _mealType);
+    await ref.read(mealLoggerProvider.notifier).logRecipe(
+      recipe: recipe,
+      servings: _servings,
+      mealType: _mealType,
+      mealPlanEntryId: _mealPlanEntryId,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final food = _food;
+    final recipe = _recipe;
     final logState = ref.watch(mealLoggerProvider);
 
     ref.listen(mealLoggerProvider, (_, next) {
@@ -94,7 +92,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
       }
     });
 
-    if (food == null) {
+    if (recipe == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Log meal')),
         body: Center(
@@ -106,13 +104,13 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                 const Icon(Icons.error_outline, size: 56),
                 const SizedBox(height: 16),
                 Text(
-                  'This food entry could not be loaded.',
+                  'This recipe could not be loaded.',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Go back and choose a food again.',
+                  'Go back and choose it again.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -130,13 +128,13 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
       );
     }
 
-    final calories = food.caloriesForAmount(_amount);
-    final protein = food.proteinForAmount(_amount);
-    final carbs = food.carbsForAmount(_amount);
-    final fat = food.fatForAmount(_amount);
+    final calories = recipe.caloriesPerServing * _servings;
+    final protein = recipe.proteinPerServing * _servings;
+    final carbs = recipe.carbsPerServing * _servings;
+    final fat = recipe.fatPerServing * _servings;
 
     return Scaffold(
-      appBar: AppBar(title: Text(food.name)),
+      appBar: AppBar(title: Text(recipe.title)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -145,9 +143,9 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (food.brand != null) ...[
+                if (recipe.description != null) ...[
                   Text(
-                    food.brand!,
+                    recipe.description!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -161,7 +159,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Quick portions',
+                          'Quick servings',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -169,16 +167,16 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _servingShortcuts(food)
+                          children: _servingShortcuts
                               .map(
-                                (grams) => ChoiceChip(
-                                  label: Text('${grams.toInt()}g'),
+                                (servings) => ChoiceChip(
+                                  label: Text('${servings}x'),
                                   selected:
-                                      _amountController.text.trim() ==
-                                      grams.toInt().toString(),
+                                      _servingsController.text.trim() ==
+                                      servings.toString(),
                                   onSelected: (_) {
-                                    _amountController.text =
-                                        grams.toInt().toString();
+                                    _servingsController.text =
+                                        servings.toString();
                                     setState(() {});
                                   },
                                 ),
@@ -205,18 +203,18 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  controller: _amountController,
+                  controller: _servingsController,
                   decoration: const InputDecoration(
-                    labelText: 'Amount (g)',
+                    labelText: 'Servings',
                     prefixIcon: Icon(Icons.scale_outlined),
-                    suffixText: 'g',
+                    suffixText: 'x',
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   onChanged: (_) => setState(() {}),
                   validator: (v) =>
-                      Validators.positiveNumber(v, fieldName: 'Amount'),
+                      Validators.positiveNumber(v, fieldName: 'Servings'),
                 ),
                 const SizedBox(height: 24),
                 Card(
@@ -226,13 +224,13 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nutrition for ${_amount.toInt()}g',
+                          'Nutrition for ${_servings.toStringAsFixed(_servings % 1 == 0 ? 0 : 1)} servings',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Live preview before you save it.',
+                          'Based on the per-serving macros saved on this recipe.',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),

@@ -5,28 +5,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../recipes/domain/recipe.dart';
+import '../../recipes/providers/recipe_provider.dart';
 import '../data/nutrition_repository.dart';
-import '../domain/food_item.dart';
 import '../domain/meal_log_entry.dart';
 
 const _uuid = Uuid();
-const _recentFoodsStorageKey = 'recent_foods';
+const _recentRecipesStorageKey = 'recent_recipes';
 
 final nutritionRepositoryProvider = Provider<NutritionRepository>(
   (_) => const NutritionRepository(),
 );
 
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
-  _,
-) async {
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((_) async {
   return SharedPreferences.getInstance();
 });
 
-// Food search
-
-class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
+class _FoodSearchNotifier extends AsyncNotifier<List<Recipe>> {
   @override
-  Future<List<FoodItem>> build() async => [];
+  Future<List<Recipe>> build() async => [];
 
   Future<void> search(String query) async {
     if (query.trim().isEmpty) {
@@ -35,7 +32,7 @@ class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
     }
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(nutritionRepositoryProvider).searchFoods(query.trim()),
+      () => ref.read(nutritionRepositoryProvider).searchRecipes(query.trim()),
     );
   }
 
@@ -43,40 +40,40 @@ class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
 }
 
 final foodSearchProvider =
-    AsyncNotifierProvider<_FoodSearchNotifier, List<FoodItem>>(
+    AsyncNotifierProvider<_FoodSearchNotifier, List<Recipe>>(
       _FoodSearchNotifier.new,
     );
 
-final popularFoodsProvider = FutureProvider<List<FoodItem>>((ref) async {
-  return ref.watch(nutritionRepositoryProvider).fetchPopularFoods();
+final popularFoodsProvider = FutureProvider<List<Recipe>>((ref) async {
+  return ref.watch(nutritionRepositoryProvider).fetchPopularRecipes();
 });
 
-class _RecentFoodsNotifier extends AsyncNotifier<List<FoodItem>> {
+class _RecentFoodsNotifier extends AsyncNotifier<List<Recipe>> {
   @override
-  Future<List<FoodItem>> build() async {
+  Future<List<Recipe>> build() async {
     final preferences = await ref.watch(sharedPreferencesProvider.future);
-    final storedFoods =
-        preferences.getStringList(_recentFoodsStorageKey) ?? const [];
+    final storedRecipes =
+        preferences.getStringList(_recentRecipesStorageKey) ?? const [];
 
-    return storedFoods
+    return storedRecipes
         .map(
-          (foodJson) => FoodItem.fromJson(
-            jsonDecode(foodJson) as Map<String, dynamic>,
+          (recipeJson) => Recipe.fromJson(
+            jsonDecode(recipeJson) as Map<String, dynamic>,
           ),
         )
         .toList();
   }
 
-  Future<void> addFood(FoodItem food) async {
+  Future<void> addRecipe(Recipe recipe) async {
     final preferences = await ref.read(sharedPreferencesProvider.future);
     final current = [...state.valueOrNull ?? []];
 
-    current.removeWhere((item) => item.id == food.id);
-    current.insert(0, food);
+    current.removeWhere((item) => item.id == recipe.id);
+    current.insert(0, recipe);
 
     final trimmed = current.take(8).toList(growable: false);
     await preferences.setStringList(
-      _recentFoodsStorageKey,
+      _recentRecipesStorageKey,
       trimmed.map((item) => jsonEncode(item.toJson())).toList(),
     );
 
@@ -85,26 +82,23 @@ class _RecentFoodsNotifier extends AsyncNotifier<List<FoodItem>> {
 }
 
 final recentFoodsProvider =
-    AsyncNotifierProvider<_RecentFoodsNotifier, List<FoodItem>>(
+    AsyncNotifierProvider<_RecentFoodsNotifier, List<Recipe>>(
       _RecentFoodsNotifier.new,
     );
-
-// Today's logs
 
 final todayLogsProvider = FutureProvider<List<MealLogEntry>>((ref) async {
   return ref.watch(nutritionRepositoryProvider).fetchLogsForDate(DateTime.now());
 });
 
-// Meal logger
-
 class _MealLoggerNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<void> logFood({
-    required FoodItem food,
-    required double amountGrams,
+  Future<void> logRecipe({
+    required Recipe recipe,
+    required double servings,
     required MealType mealType,
+    String? mealPlanEntryId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -114,20 +108,21 @@ class _MealLoggerNotifier extends AsyncNotifier<void> {
       final entry = MealLogEntry(
         id: _uuid.v4(),
         userId: userId,
-        foodItemId: food.id,
-        foodName: food.name,
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+        mealPlanEntryId: mealPlanEntryId,
         mealType: mealType,
-        amountGrams: amountGrams,
-        calories: food.caloriesForAmount(amountGrams),
-        protein: food.proteinForAmount(amountGrams),
-        carbs: food.carbsForAmount(amountGrams),
-        fat: food.fatForAmount(amountGrams),
+        servings: servings,
+        calories: recipe.caloriesPerServing * servings,
+        protein: recipe.proteinPerServing * servings,
+        carbs: recipe.carbsPerServing * servings,
+        fat: recipe.fatPerServing * servings,
         loggedAt: DateTime.now().toUtc(),
         createdAt: DateTime.now().toUtc(),
       );
 
       await ref.read(nutritionRepositoryProvider).addLogEntry(entry);
-      await ref.read(recentFoodsProvider.notifier).addFood(food);
+      await ref.read(recentFoodsProvider.notifier).addRecipe(recipe);
       ref.invalidate(todayLogsProvider);
     });
   }
@@ -145,42 +140,51 @@ final mealLoggerProvider = AsyncNotifierProvider<_MealLoggerNotifier, void>(
   _MealLoggerNotifier.new,
 );
 
-class _CustomFoodNotifier extends AsyncNotifier<FoodItem?> {
+class _CustomFoodNotifier extends AsyncNotifier<Recipe?> {
   @override
-  Future<FoodItem?> build() async => null;
+  Future<Recipe?> build() async => null;
 
-  Future<FoodItem?> createCustomFood({
+  Future<Recipe?> createCustomFood({
     required String name,
     String? brand,
-    required double caloriesPer100g,
-    required double proteinPer100g,
-    required double carbsPer100g,
-    required double fatPer100g,
-    required double defaultServingGrams,
+    required double caloriesPerServing,
+    required double proteinPerServing,
+    required double carbsPerServing,
+    required double fatPerServing,
+    required double defaultServings,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) throw Exception('Not authenticated');
 
-      final food = FoodItem(
+      final recipe = Recipe(
         id: _uuid.v4(),
-        name: name.trim(),
-        brand: brand?.trim().isEmpty ?? true ? null : brand!.trim(),
-        caloriesPer100g: caloriesPer100g,
-        proteinPer100g: proteinPer100g,
-        carbsPer100g: carbsPer100g,
-        fatPer100g: fatPer100g,
-        defaultServingGrams: defaultServingGrams,
-        isCustom: true,
-        userId: userId,
+        createdBy: userId,
+        title: name.trim(),
+        description: brand?.trim().isEmpty ?? true ? null : 'Brand: ${brand!.trim()}',
+        servings: defaultServings <= 0 ? 1 : defaultServings.round(),
+        prepTimeMinutes: 0,
+        cookTimeMinutes: 0,
+        calories: caloriesPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        proteinG: proteinPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        carbsG: carbsPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        fatG: fatPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        ingredients: [RecipeIngredient(name: name.trim(), quantity: 1)],
+        instructions: const ['Quick add item'],
+        tags: const ['quick-add'],
+        isCommunity: false,
+        isPublic: false,
+        downloads: 0,
+        createdAt: DateTime.now().toUtc(),
       );
 
       final created = await ref
           .read(nutritionRepositoryProvider)
-          .createCustomFood(food);
-      await ref.read(recentFoodsProvider.notifier).addFood(created);
+          .createQuickRecipe(recipe);
+      await ref.read(recentFoodsProvider.notifier).addRecipe(created);
       ref.invalidate(popularFoodsProvider);
+      ref.invalidate(myRecipesProvider);
       return created;
     });
     return state.valueOrNull;
@@ -188,11 +192,9 @@ class _CustomFoodNotifier extends AsyncNotifier<FoodItem?> {
 }
 
 final customFoodProvider =
-    AsyncNotifierProvider<_CustomFoodNotifier, FoodItem?>(
+    AsyncNotifierProvider<_CustomFoodNotifier, Recipe?>(
       _CustomFoodNotifier.new,
     );
-
-// Aggregation helpers
 
 class DailyTotals {
   const DailyTotals({

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../providers/community_provider.dart';
 
@@ -54,6 +55,10 @@ class CommunityScreen extends ConsumerWidget {
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(16),
+                            onTap: () => context.push(
+                              '/recipes/${recipe.id}',
+                              extra: recipe,
+                            ),
                             title: Text(recipe.title),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

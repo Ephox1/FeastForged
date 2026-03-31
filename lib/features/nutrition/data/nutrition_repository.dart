@@ -1,58 +1,68 @@
 import '../../../core/supabase/supabase_client.dart';
-import '../domain/food_item.dart';
+import '../../recipes/domain/recipe.dart';
 import '../domain/meal_log_entry.dart';
 
 class NutritionRepository {
   const NutritionRepository();
 
-  // ── Food items ──────────────────────────────────────────────────────────────
-
-  Future<List<FoodItem>> searchFoods(String query) async {
-    if (query.trim().isEmpty) return [];
+  Future<List<Recipe>> searchRecipes(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
 
     final userId = supabase.auth.currentUser?.id;
-    final escapedQuery = query.trim().replaceAll(',', ' ');
+    final escapedQuery = trimmed.replaceAll(',', ' ');
 
-    final data = await supabase
-        .from('food_items')
+    final data = await (userId != null
+        ? supabase
+        .from('recipes')
         .select()
-        .or('name.ilike.%$escapedQuery%,brand.ilike.%$escapedQuery%')
-        .or('is_custom.eq.false,user_id.eq.$userId')
-        .order('is_custom', ascending: false)
-        .order('name')
-        .limit(30);
-
+        .or('title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%')
+        .or('created_by.eq.$userId,is_public.eq.true')
+        .order('is_public', ascending: false)
+        .order('downloads', ascending: false)
+        .limit(30)
+        : supabase
+              .from('recipes')
+              .select()
+              .or('title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%')
+              .eq('is_public', true)
+              .order('downloads', ascending: false)
+              .limit(30));
     return (data as List)
-        .map((json) => FoodItem.fromJson(json as Map<String, dynamic>))
+        .map((json) => Recipe.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<FoodItem>> fetchPopularFoods() async {
+  Future<List<Recipe>> fetchPopularRecipes() async {
     final userId = supabase.auth.currentUser?.id;
-
-    final data = await supabase
-        .from('food_items')
-        .select()
-        .or('is_custom.eq.false,user_id.eq.$userId')
-        .order('is_custom', ascending: false)
-        .order('name')
-        .limit(12);
-
+    final data = await (userId != null
+        ? supabase
+              .from('recipes')
+              .select()
+              .or('created_by.eq.$userId,is_public.eq.true')
+              .order('downloads', ascending: false)
+              .order('created_at', ascending: false)
+              .limit(12)
+        : supabase
+              .from('recipes')
+              .select()
+              .eq('is_public', true)
+              .order('downloads', ascending: false)
+              .order('created_at', ascending: false)
+              .limit(12));
     return (data as List)
-        .map((json) => FoodItem.fromJson(json as Map<String, dynamic>))
+        .map((json) => Recipe.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
-  Future<FoodItem> createCustomFood(FoodItem food) async {
+  Future<Recipe> createQuickRecipe(Recipe recipe) async {
     final data = await supabase
-        .from('food_items')
-        .insert(food.toJson())
+        .from('recipes')
+        .insert(recipe.toJson())
         .select()
         .single();
-    return FoodItem.fromJson(data);
+    return Recipe.fromJson(data);
   }
-
-  // ── Meal log entries ─────────────────────────────────────────────────────────
 
   Future<List<MealLogEntry>> fetchLogsForDate(DateTime date) async {
     final userId = supabase.auth.currentUser?.id;
@@ -62,7 +72,7 @@ class NutritionRepository {
     final dayEnd = dayStart.add(const Duration(days: 1));
 
     final data = await supabase
-        .from('meal_log_entries')
+        .from('recipe_log_entries')
         .select()
         .eq('user_id', userId)
         .gte('logged_at', dayStart.toIso8601String())
@@ -76,7 +86,7 @@ class NutritionRepository {
 
   Future<MealLogEntry> addLogEntry(MealLogEntry entry) async {
     final data = await supabase
-        .from('meal_log_entries')
+        .from('recipe_log_entries')
         .insert(entry.toJson())
         .select()
         .single();
@@ -84,6 +94,6 @@ class NutritionRepository {
   }
 
   Future<void> deleteLogEntry(String entryId) async {
-    await supabase.from('meal_log_entries').delete().eq('id', entryId);
+    await supabase.from('recipe_log_entries').delete().eq('id', entryId);
   }
 }

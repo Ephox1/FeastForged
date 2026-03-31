@@ -31,7 +31,7 @@ class RecipeListScreen extends ConsumerWidget {
         title: const Text('Recipes'),
         actions: [
           IconButton(
-            onPressed: () => context.push('/planner'),
+            onPressed: () => context.push('/app/planner'),
             icon: const Icon(Icons.calendar_month_outlined),
             tooltip: 'Planner',
           ),
@@ -145,6 +145,8 @@ class _RecipeSection extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
+                        onTap: () =>
+                            context.push('/recipes/${recipe.id}', extra: recipe),
                         title: Text(
                           recipe.title,
                           style: Theme.of(context).textTheme.titleMedium
@@ -185,7 +187,7 @@ class _RecipeSection extends StatelessWidget {
                             if (value == 'delete' && onDelete != null) {
                               await onDelete!(recipe.id);
                             } else if (value == 'plan') {
-                              context.push('/planner', extra: recipe.toJson());
+                              context.push('/app/planner', extra: recipe.toJson());
                             }
                           },
                           itemBuilder: (_) => [
