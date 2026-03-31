@@ -20,9 +20,7 @@ class ProfileRepository {
 
   Future<UserProfile> upsertProfile(UserProfile profile) async {
     final data = profile.toJson();
-    await supabase
-        .from('user_profiles')
-        .upsert(data, onConflict: 'id');
+    await supabase.from('user_profiles').upsert(data, onConflict: 'id');
     return profile;
   }
 

@@ -38,7 +38,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final height = double.parse(_heightController.text.trim());
     final age = int.parse(_ageController.text.trim());
 
-    await ref.read(profileNotifierProvider.notifier).createProfile(
+    await ref
+        .read(profileNotifierProvider.notifier)
+        .createProfile(
           weightKg: weight,
           heightCm: height,
           age: age,
@@ -79,15 +81,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Text(
                   "Let's personalize your plan",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'We use this to calculate your daily calorie and macro targets.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 28),
                 Row(
@@ -100,7 +102,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           prefixIcon: Icon(Icons.monitor_weight_outlined),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         textInputAction: TextInputAction.next,
                         validator: (v) =>
                             Validators.positiveNumber(v, fieldName: 'Weight'),
@@ -115,7 +118,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           prefixIcon: Icon(Icons.height),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         textInputAction: TextInputAction.next,
                         validator: (v) =>
                             Validators.positiveNumber(v, fieldName: 'Height'),
@@ -152,10 +156,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Goal',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Goal', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 ...Goal.values.map(
                   (goal) => RadioListTile<Goal>(

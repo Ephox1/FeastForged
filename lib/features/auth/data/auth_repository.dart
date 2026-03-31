@@ -7,8 +7,7 @@ class AuthRepository {
 
   User? get currentUser => supabase.auth.currentUser;
 
-  Stream<AuthState> get authStateChanges =>
-      supabase.auth.onAuthStateChange;
+  Stream<AuthState> get authStateChanges => supabase.auth.onAuthStateChange;
 
   Future<AuthResponse> signUp({
     required String email,

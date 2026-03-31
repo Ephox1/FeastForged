@@ -26,27 +26,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     refreshListenable: _AuthChangeNotifier(client),
     routes: [
-      GoRoute(
-        path: '/auth/login',
-        builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/auth/signup',
-        builder: (_, __) => const SignupScreen(),
-      ),
+      GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/auth/signup', builder: (_, __) => const SignupScreen()),
       GoRoute(
         path: '/auth/onboarding',
         builder: (_, __) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path: '/dashboard',
-        builder: (_, __) => const DashboardScreen(),
-      ),
+      GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
       GoRoute(
         path: '/food-search',
         builder: (_, state) {
-          final mealType =
-              state.uri.queryParameters['mealType'] ?? 'other';
+          final mealType = state.uri.queryParameters['mealType'] ?? 'other';
           return FoodSearchScreen(mealType: mealType);
         },
       ),

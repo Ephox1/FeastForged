@@ -28,7 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(authNotifierProvider.notifier).signIn(
+    await ref
+        .read(authNotifierProvider.notifier)
+        .signIn(
           email: _emailController.text,
           password: _passwordController.text,
         );
@@ -64,17 +66,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'FeastForged',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Hit your goals without feeling like\nyou're starving.",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -102,7 +104,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               : Icons.visibility_off_outlined,
                         ),
                         onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
                     obscureText: _obscurePassword,

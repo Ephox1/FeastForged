@@ -24,20 +24,17 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
     super.dispose();
   }
 
-  MealType get _mealType =>
-      MealType.values.firstWhere(
-        (e) => e.name == widget.mealType,
-        orElse: () => MealType.other,
-      );
+  MealType get _mealType => MealType.values.firstWhere(
+    (e) => e.name == widget.mealType,
+    orElse: () => MealType.other,
+  );
 
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(foodSearchProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Add to ${_mealType.label}'),
-      ),
+      appBar: AppBar(title: Text('Add to ${_mealType.label}')),
       body: Column(
         children: [
           Padding(
@@ -62,10 +59,8 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
           ),
           Expanded(
             child: searchState.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text('Search error: $e')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Search error: $e')),
               data: (foods) {
                 if (foods.isEmpty && _searchController.text.isNotEmpty) {
                   return Center(
@@ -76,8 +71,7 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                         const SizedBox(height: 16),
                         Text(
                           'No foods found for "${_searchController.text}"',
-                          style:
-                              Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyLarge,
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -93,21 +87,18 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                         Icon(
                           Icons.restaurant_menu,
                           size: 64,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant
-                              .withValues(alpha: 0.4),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Search for a food to log',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
+                          style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -121,10 +112,7 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                       const Divider(height: 1, indent: 16),
                   itemBuilder: (context, index) {
                     final food = foods[index];
-                    return _FoodTile(
-                      food: food,
-                      mealType: _mealType,
-                    );
+                    return _FoodTile(food: food, mealType: _mealType);
                   },
                 );
               },
@@ -146,32 +134,23 @@ class _FoodTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(food.name),
-      subtitle: food.brand != null
-          ? Text(food.brand!)
-          : null,
+      subtitle: food.brand != null ? Text(food.brand!) : null,
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
             '${food.caloriesPer100g.toInt()} kcal',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          Text(
-            'per 100g',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text('per 100g', style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
       onTap: () => context.push(
         '/log-meal',
-        extra: {
-          'food': food.toJson(),
-          'mealType': mealType.name,
-        },
+        extra: {'food': food.toJson(), 'mealType': mealType.name},
       ),
     );
   }

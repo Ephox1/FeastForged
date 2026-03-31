@@ -33,37 +33,37 @@ class FoodItem {
   final String? userId;
 
   factory FoodItem.fromJson(Map<String, dynamic> json) => FoodItem(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        brand: json['brand'] as String?,
-        caloriesPer100g: (json['calories_per_100g'] as num).toDouble(),
-        proteinPer100g: (json['protein_per_100g'] as num? ?? 0).toDouble(),
-        carbsPer100g: (json['carbs_per_100g'] as num? ?? 0).toDouble(),
-        fatPer100g: (json['fat_per_100g'] as num? ?? 0).toDouble(),
-        fiberPer100g: (json['fiber_per_100g'] as num? ?? 0).toDouble(),
-        sugarPer100g: (json['sugar_per_100g'] as num? ?? 0).toDouble(),
-        servingUnit: json['serving_unit'] as String?,
-        defaultServingGrams:
-            (json['default_serving_grams'] as num? ?? 100).toDouble(),
-        isCustom: json['is_custom'] as bool? ?? false,
-        userId: json['user_id'] as String?,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    brand: json['brand'] as String?,
+    caloriesPer100g: (json['calories_per_100g'] as num).toDouble(),
+    proteinPer100g: (json['protein_per_100g'] as num? ?? 0).toDouble(),
+    carbsPer100g: (json['carbs_per_100g'] as num? ?? 0).toDouble(),
+    fatPer100g: (json['fat_per_100g'] as num? ?? 0).toDouble(),
+    fiberPer100g: (json['fiber_per_100g'] as num? ?? 0).toDouble(),
+    sugarPer100g: (json['sugar_per_100g'] as num? ?? 0).toDouble(),
+    servingUnit: json['serving_unit'] as String?,
+    defaultServingGrams: (json['default_serving_grams'] as num? ?? 100)
+        .toDouble(),
+    isCustom: json['is_custom'] as bool? ?? false,
+    userId: json['user_id'] as String?,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        if (brand != null) 'brand': brand,
-        'calories_per_100g': caloriesPer100g,
-        'protein_per_100g': proteinPer100g,
-        'carbs_per_100g': carbsPer100g,
-        'fat_per_100g': fatPer100g,
-        'fiber_per_100g': fiberPer100g,
-        'sugar_per_100g': sugarPer100g,
-        if (servingUnit != null) 'serving_unit': servingUnit,
-        'default_serving_grams': defaultServingGrams,
-        'is_custom': isCustom,
-        if (userId != null) 'user_id': userId,
-      };
+    'id': id,
+    'name': name,
+    if (brand != null) 'brand': brand,
+    'calories_per_100g': caloriesPer100g,
+    'protein_per_100g': proteinPer100g,
+    'carbs_per_100g': carbsPer100g,
+    'fat_per_100g': fatPer100g,
+    'fiber_per_100g': fiberPer100g,
+    'sugar_per_100g': sugarPer100g,
+    if (servingUnit != null) 'serving_unit': servingUnit,
+    'default_serving_grams': defaultServingGrams,
+    'is_custom': isCustom,
+    if (userId != null) 'user_id': userId,
+  };
 
   double caloriesForAmount(double grams) => caloriesPer100g * grams / 100;
   double proteinForAmount(double grams) => proteinPer100g * grams / 100;

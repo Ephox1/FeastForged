@@ -56,8 +56,9 @@ class _ProfileNotifier extends AsyncNotifier<UserProfile?> {
         createdAt: DateTime.now().toUtc(),
       );
 
-      final saved =
-          await ref.read(profileRepositoryProvider).upsertProfile(profile);
+      final saved = await ref
+          .read(profileRepositoryProvider)
+          .upsertProfile(profile);
       ref.invalidate(currentProfileProvider);
       return saved;
     });
@@ -65,7 +66,4 @@ class _ProfileNotifier extends AsyncNotifier<UserProfile?> {
 }
 
 final profileNotifierProvider =
-    AsyncNotifierProvider<_ProfileNotifier, UserProfile?>(
-  _ProfileNotifier.new,
-);
-
+    AsyncNotifierProvider<_ProfileNotifier, UserProfile?>(_ProfileNotifier.new);

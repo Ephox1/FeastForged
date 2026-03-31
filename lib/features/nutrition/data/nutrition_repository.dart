@@ -65,9 +65,6 @@ class NutritionRepository {
   }
 
   Future<void> deleteLogEntry(String entryId) async {
-    await supabase
-        .from('meal_log_entries')
-        .delete()
-        .eq('id', entryId);
+    await supabase.from('meal_log_entries').delete().eq('id', entryId);
   }
 }

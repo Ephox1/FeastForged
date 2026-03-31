@@ -18,8 +18,10 @@ class MealSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sectionCalories =
-        entries.fold<double>(0, (sum, e) => sum + e.calories);
+    final sectionCalories = entries.fold<double>(
+      0,
+      (sum, e) => sum + e.calories,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -28,16 +30,15 @@ class MealSection extends ConsumerWidget {
           ListTile(
             title: Text(
               mealType.label,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               '${sectionCalories.toInt()} kcal',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             trailing: IconButton(
               icon: const Icon(Icons.add_circle_outline),
@@ -46,9 +47,7 @@ class MealSection extends ConsumerWidget {
             ),
           ),
           if (entries.isNotEmpty) const Divider(height: 1),
-          ...entries.map(
-            (entry) => _FoodLogTile(entry: entry),
-          ),
+          ...entries.map((entry) => _FoodLogTile(entry: entry)),
         ],
       ),
     );
@@ -70,17 +69,16 @@ class _FoodLogTile extends ConsumerWidget {
         children: [
           Text(
             '${entry.calories.toInt()} kcal',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20),
             tooltip: 'Remove',
-            onPressed: () => ref
-                .read(mealLoggerProvider.notifier)
-                .deleteEntry(entry.id),
+            onPressed: () =>
+                ref.read(mealLoggerProvider.notifier).deleteEntry(entry.id),
           ),
         ],
       ),

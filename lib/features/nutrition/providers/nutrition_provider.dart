@@ -14,8 +14,7 @@ final nutritionRepositoryProvider = Provider<NutritionRepository>(
 
 // ── Food search ───────────────────────────────────────────────────────────────
 
-class _FoodSearchNotifier
-    extends AsyncNotifier<List<FoodItem>> {
+class _FoodSearchNotifier extends AsyncNotifier<List<FoodItem>> {
   @override
   Future<List<FoodItem>> build() async => [];
 
@@ -35,8 +34,8 @@ class _FoodSearchNotifier
 
 final foodSearchProvider =
     AsyncNotifierProvider<_FoodSearchNotifier, List<FoodItem>>(
-  _FoodSearchNotifier.new,
-);
+      _FoodSearchNotifier.new,
+    );
 
 // ── Today's logs ──────────────────────────────────────────────────────────────
 
@@ -91,8 +90,9 @@ class _MealLoggerNotifier extends AsyncNotifier<void> {
   }
 }
 
-final mealLoggerProvider =
-    AsyncNotifierProvider<_MealLoggerNotifier, void>(_MealLoggerNotifier.new);
+final mealLoggerProvider = AsyncNotifierProvider<_MealLoggerNotifier, void>(
+  _MealLoggerNotifier.new,
+);
 
 // ── Aggregation helpers ───────────────────────────────────────────────────────
 
@@ -110,18 +110,16 @@ class DailyTotals {
   final double fat;
 
   DailyTotals operator +(MealLogEntry entry) => DailyTotals(
-        calories: calories + entry.calories,
-        protein: protein + entry.protein,
-        carbs: carbs + entry.carbs,
-        fat: fat + entry.fat,
-      );
+    calories: calories + entry.calories,
+    protein: protein + entry.protein,
+    carbs: carbs + entry.carbs,
+    fat: fat + entry.fat,
+  );
 }
 
 extension MealLogListX on List<MealLogEntry> {
-  DailyTotals get totals => fold(
-        const DailyTotals(),
-        (acc, entry) => acc + entry,
-      );
+  DailyTotals get totals =>
+      fold(const DailyTotals(), (acc, entry) => acc + entry);
 
   List<MealLogEntry> forMealType(MealType type) =>
       where((e) => e.mealType == type).toList();

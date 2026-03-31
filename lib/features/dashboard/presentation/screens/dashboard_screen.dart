@@ -24,8 +24,7 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout_outlined),
             tooltip: 'Sign out',
-            onPressed: () =>
-                ref.read(authNotifierProvider.notifier).signOut(),
+            onPressed: () => ref.read(authNotifierProvider.notifier).signOut(),
           ),
         ],
       ),
@@ -35,10 +34,8 @@ class DashboardScreen extends ConsumerWidget {
           ref.invalidate(currentProfileProvider);
         },
         child: profileAsync.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
-          error: (e, _) =>
-              Center(child: Text('Error loading profile: $e')),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error loading profile: $e')),
           data: (profile) {
             if (profile == null) {
               // Hasn't completed onboarding
@@ -49,10 +46,8 @@ class DashboardScreen extends ConsumerWidget {
             }
 
             return logsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text('Error loading logs: $e')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error loading logs: $e')),
               data: (logs) {
                 final totals = logs.totals;
 
@@ -62,21 +57,14 @@ class DashboardScreen extends ConsumerWidget {
                     // Date header
                     Text(
                       _todayLabel(),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Hello! Here\'s your nutrition today.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
+                      style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 24),
@@ -118,12 +106,27 @@ class DashboardScreen extends ConsumerWidget {
   String _todayLabel() {
     final now = DateTime.now();
     const weekdays = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
-      'Sunday'
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
   }

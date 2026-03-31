@@ -49,8 +49,9 @@ class MacroRing extends StatelessWidget {
                               ? (consumed / target).clamp(0, 1)
                               : 0,
                           color: scheme.primary,
-                          backgroundColor:
-                              scheme.primaryContainer.withValues(alpha: 0.3),
+                          backgroundColor: scheme.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       Column(
@@ -58,19 +59,13 @@ class MacroRing extends StatelessWidget {
                         children: [
                           Text(
                             consumed.toInt().toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             'kcal',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -97,9 +92,7 @@ class MacroRing extends StatelessWidget {
                       _CalorieStat(
                         label: 'Remaining',
                         value: remaining.toInt().toString(),
-                        color: remaining > 0
-                            ? scheme.secondary
-                            : scheme.error,
+                        color: remaining > 0 ? scheme.secondary : scheme.error,
                       ),
                     ],
                   ),
@@ -160,10 +153,10 @@ class _CalorieStat extends StatelessWidget {
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
         Text(
           value,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: color, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -193,10 +186,7 @@ class _MacroBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 4),
           LinearProgressIndicator(
             value: progress,
@@ -208,9 +198,9 @@ class _MacroBar extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${value.toInt()}/${target.toInt()}$unit',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
