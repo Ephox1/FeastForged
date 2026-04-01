@@ -9,13 +9,21 @@ import '../../../recipes/providers/recipe_provider.dart';
 import '../../domain/meal_plan.dart';
 import '../../providers/meal_plan_provider.dart';
 
-class WeeklyPlannerScreen extends ConsumerWidget {
+class WeeklyPlannerScreen extends ConsumerStatefulWidget {
   const WeeklyPlannerScreen({super.key, this.recipeToSeed});
 
   final Map<String, dynamic>? recipeToSeed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeeklyPlannerScreen> createState() =>
+      _WeeklyPlannerScreenState();
+}
+
+class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
+  bool _seedHandled = false;
+
+  @override
+  Widget build(BuildContext context) {
     final planAsync = ref.watch(currentWeekPlanProvider);
     final entriesAsync = ref.watch(currentWeekEntriesProvider);
     final completedPlanEntryIds = ref.watch(todayCompletedPlanEntryIdsProvider);
@@ -79,6 +87,8 @@ class WeeklyPlannerScreen extends ConsumerWidget {
                 ],
               );
             }
+
+            _maybeHandleRecipeSeed(plan);
 
             return entriesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -153,6 +163,160 @@ class WeeklyPlannerScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _maybeHandleRecipeSeed(MealPlan plan) {
+    if (_seedHandled || widget.recipeToSeed == null) {
+      return;
+    }
+
+    final recipe = Recipe.fromJson(widget.recipeToSeed!);
+    _seedHandled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      await _showSeedRecipeSheet(context, plan, recipe);
+    });
+  }
+
+  Future<void> _showSeedRecipeSheet(
+    BuildContext context,
+    MealPlan plan,
+    Recipe recipe,
+  ) async {
+    final selectedDay = ValueNotifier<int>(plannerDayOfWeekFor(DateTime.now()));
+    final selectedMealType = ValueNotifier<PlannerMealType>(
+      PlannerMealType.dinner,
+    );
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) {
+          final colorScheme = Theme.of(context).colorScheme;
+          const days = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+          ];
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              MediaQuery.of(context).viewInsets.bottom + 28,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Plan ${recipe.title}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Choose a day and meal slot for this recipe.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Day',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ValueListenableBuilder<int>(
+                  valueListenable: selectedDay,
+                  builder: (_, day, __) => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(
+                      days.length,
+                      (index) => ChoiceChip(
+                        label: Text(days[index]),
+                        selected: day == index,
+                        onSelected: (_) => selectedDay.value = index,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Meal',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ValueListenableBuilder<PlannerMealType>(
+                  valueListenable: selectedMealType,
+                  builder: (_, mealType, __) => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: PlannerMealType.values
+                        .map(
+                          (value) => ChoiceChip(
+                            label: Text(value.label),
+                            selected: mealType == value,
+                            onSelected: (_) => selectedMealType.value = value,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      await ref.read(mealPlanEditorProvider.notifier).addEntry(
+                            mealPlanId: plan.id,
+                            recipeId: recipe.id,
+                            dayOfWeek: selectedDay.value,
+                            mealType: selectedMealType.value,
+                            servings: 1,
+                          );
+                      if (!context.mounted) {
+                        return;
+                      }
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${recipe.title} added to ${days[selectedDay.value]} ${selectedMealType.value.label.toLowerCase()}.',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text('Add to plan'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } finally {
+      selectedDay.dispose();
+      selectedMealType.dispose();
+    }
   }
 
   String _formatDate(DateTime date) =>
