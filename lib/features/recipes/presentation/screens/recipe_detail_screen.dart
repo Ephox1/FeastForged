@@ -32,6 +32,21 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     context.go('/app/planner?seedRecipeId=${recipe.id}&seedRecipeTitle=$title');
   }
 
+  Future<bool> _runCommunityAction(
+    Future<void> Function() action, {
+    required String successMessage,
+  }) async {
+    await action();
+    if (!mounted) return false;
+    if (ref.read(communityActionProvider) case AsyncError()) {
+      return false;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(successMessage)),
+    );
+    return true;
+  }
+
   @override
   void dispose() {
     _reviewController.dispose();
@@ -146,20 +161,38 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                           return ChoiceChip(
                             label: Text('$rating star${rating == 1 ? '' : 's'}'),
                             selected: selected,
-                            onSelected: (_) => ref
-                                .read(communityActionProvider.notifier)
-                                .setRating(recipeId: recipe.id, rating: rating),
+                            onSelected: actionState is AsyncLoading
+                                ? null
+                                : (_) => _runCommunityAction(
+                                      () => ref
+                                          .read(
+                                            communityActionProvider.notifier,
+                                          )
+                                          .setRating(
+                                            recipeId: recipe.id,
+                                            rating: rating,
+                                          ),
+                                      successMessage:
+                                          'Saved your $rating-star rating.',
+                                    ),
                           );
                         }),
                       ),
                       const SizedBox(height: 12),
                       FilledButton.tonalIcon(
-                        onPressed: () => ref
-                            .read(communityActionProvider.notifier)
-                            .toggleSave(
-                              recipeId: recipe.id,
-                              shouldSave: !detail.isSaved,
-                            ),
+                        onPressed: actionState is AsyncLoading
+                            ? null
+                            : () => _runCommunityAction(
+                                  () => ref
+                                      .read(communityActionProvider.notifier)
+                                      .toggleSave(
+                                        recipeId: recipe.id,
+                                        shouldSave: !detail.isSaved,
+                                      ),
+                                  successMessage: detail.isSaved
+                                      ? 'Removed from your saved recipes.'
+                                      : 'Saved to your recipe library.',
+                                ),
                         icon: Icon(
                           detail.isSaved
                               ? Icons.bookmark
@@ -206,13 +239,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                       false)) {
                                     return;
                                   }
-                                  await ref
-                                      .read(communityActionProvider.notifier)
-                                      .addReview(
-                                        recipeId: recipe.id,
-                                        content: _reviewController.text,
-                                      );
-                                  _reviewController.clear();
+                                  final didSucceed = await _runCommunityAction(
+                                    () => ref
+                                        .read(communityActionProvider.notifier)
+                                        .addReview(
+                                          recipeId: recipe.id,
+                                          content: _reviewController.text,
+                                        ),
+                                    successMessage: 'Your review is live.',
+                                  );
+                                  if (didSucceed) {
+                                    _reviewController.clear();
+                                  }
                                 },
                           child: const Text('Post review'),
                         ),
@@ -294,15 +332,19 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                               review.content,
                                             );
                                           } else if (value == 'delete') {
-                                            await ref
-                                                .read(
-                                                  communityActionProvider
-                                                      .notifier,
-                                                )
-                                                .deleteReview(
-                                                  recipeId: recipe.id,
-                                                  reviewId: review.id,
-                                                );
+                                            await _runCommunityAction(
+                                              () => ref
+                                                  .read(
+                                                    communityActionProvider
+                                                        .notifier,
+                                                  )
+                                                  .deleteReview(
+                                                    recipeId: recipe.id,
+                                                    reviewId: review.id,
+                                                  ),
+                                              successMessage:
+                                                  'Review deleted.',
+                                            );
                                           }
                                         },
                                         itemBuilder: (_) => const [
@@ -362,11 +404,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           FilledButton(
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
-              await ref.read(communityActionProvider.notifier).updateReview(
-                recipeId: recipeId,
-                reviewId: reviewId,
-                content: controller.text,
+              final didSucceed = await _runCommunityAction(
+                () => ref.read(communityActionProvider.notifier).updateReview(
+                      recipeId: recipeId,
+                      reviewId: reviewId,
+                      content: controller.text,
+                    ),
+                successMessage: 'Review updated.',
               );
+              if (!didSucceed) return;
               if (!context.mounted) return;
               Navigator.of(context).pop();
             },
