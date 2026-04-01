@@ -99,6 +99,15 @@ class Recipe {
       final Map<String, dynamic> map => map,
       _ => null,
     };
+    final recipeAverageRating = (json['average_rating'] as num?)?.toDouble() ?? 0;
+    final statsAverageRating =
+        (communityStats?['average_rating'] as num?)?.toDouble() ?? 0;
+    final recipeTotalRatings = json['total_ratings'] as int? ?? 0;
+    final statsTotalRatings = communityStats?['total_ratings'] as int? ?? 0;
+    final recipeTotalSaves = json['total_saves'] as int? ?? 0;
+    final statsTotalSaves = communityStats?['total_saves'] as int? ?? 0;
+    final recipeTotalReviews = json['total_reviews'] as int? ?? 0;
+    final statsTotalReviews = communityStats?['total_reviews'] as int? ?? 0;
 
     return Recipe(
       id: json['id'] as String,
@@ -148,22 +157,18 @@ class Recipe {
           json['is_public'] as bool? ?? json['is_published'] as bool? ?? false,
       downloads:
           json['downloads'] as int? ?? json['times_cooked'] as int? ?? 0,
-      averageRating:
-          (json['average_rating'] as num?)?.toDouble() ??
-          (communityStats?['average_rating'] as num?)?.toDouble() ??
-          0,
-      totalRatings:
-          json['total_ratings'] as int? ??
-          communityStats?['total_ratings'] as int? ??
-          0,
-      totalSaves:
-          json['total_saves'] as int? ??
-          communityStats?['total_saves'] as int? ??
-          0,
-      totalReviews:
-          json['total_reviews'] as int? ??
-          communityStats?['total_reviews'] as int? ??
-          0,
+      averageRating: statsTotalRatings > 0
+          ? statsAverageRating
+          : recipeAverageRating,
+      totalRatings: recipeTotalRatings > statsTotalRatings
+          ? recipeTotalRatings
+          : statsTotalRatings,
+      totalSaves: recipeTotalSaves > statsTotalSaves
+          ? recipeTotalSaves
+          : statsTotalSaves,
+      totalReviews: recipeTotalReviews > statsTotalReviews
+          ? recipeTotalReviews
+          : statsTotalReviews,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now().toUtc(),

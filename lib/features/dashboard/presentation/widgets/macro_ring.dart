@@ -25,7 +25,9 @@ class MacroRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = (target - consumed).clamp(0, target);
+    final netRemaining = target - consumed;
+    final remaining = netRemaining.clamp(0, target);
+    final overTarget = netRemaining < 0;
     final scheme = Theme.of(context).colorScheme;
 
     return Card(
@@ -90,9 +92,11 @@ class MacroRing extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       _CalorieStat(
-                        label: 'Remaining',
-                        value: remaining.toInt().toString(),
-                        color: remaining > 0 ? scheme.secondary : scheme.error,
+                        label: overTarget ? 'Over' : 'Remaining',
+                        value: overTarget
+                            ? netRemaining.abs().toInt().toString()
+                            : remaining.toInt().toString(),
+                        color: overTarget ? scheme.error : scheme.secondary,
                       ),
                     ],
                   ),

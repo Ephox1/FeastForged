@@ -27,6 +27,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   final _reviewController = TextEditingController();
   final _reviewFormKey = GlobalKey<FormState>();
 
+  void _openPlannerForRecipe(Recipe recipe) {
+    final title = Uri.encodeComponent(recipe.title);
+    context.go('/app/planner?seedRecipeId=${recipe.id}&seedRecipeTitle=$title');
+  }
+
   @override
   void dispose() {
     _reviewController.dispose();
@@ -111,8 +116,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          context.push('/app/planner', extra: recipe.toJson()),
+                      onPressed: () => _openPlannerForRecipe(recipe),
                       icon: const Icon(Icons.calendar_month_outlined),
                       label: const Text('Plan it'),
                     ),

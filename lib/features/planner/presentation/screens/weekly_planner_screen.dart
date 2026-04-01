@@ -7,7 +7,7 @@ import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../domain/meal_plan.dart';
 import '../../providers/meal_plan_provider.dart';
 
-class WeeklyPlannerScreen extends ConsumerWidget {
+class WeeklyPlannerScreen extends ConsumerStatefulWidget {
   const WeeklyPlannerScreen({super.key, this.recipeToSeed});
 
   final Map<String, dynamic>? recipeToSeed;
@@ -23,7 +23,12 @@ class WeeklyPlannerScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeeklyPlannerScreen> createState() => _WeeklyPlannerScreenState();
+}
+
+class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
+  @override
+  Widget build(BuildContext context) {
     final planAsync = ref.watch(currentWeekPlanProvider);
     final entriesAsync = ref.watch(currentWeekEntriesProvider);
     final completedPlanEntryIds = ref.watch(todayCompletedPlanEntryIdsProvider);
@@ -47,6 +52,7 @@ class WeeklyPlannerScreen extends ConsumerWidget {
         data: (plan) {
           if (plan == null) {
             return _EmptyPlannerState(
+              selectedRecipeTitle: widget.recipeToSeed?['title'] as String?,
               onCreate: () =>
                   ref.read(mealPlanEditorProvider.notifier).createCurrentWeekPlan(),
             );
@@ -76,7 +82,14 @@ class WeeklyPlannerScreen extends ConsumerWidget {
                   _PlannerSummaryCard(
                     totalCount: entries.length,
                     completedCount: completedCount,
-                    recipeToSeedTitle: recipeToSeed?['title'] as String?,
+                    recipeToSeedTitle: widget.recipeToSeed?['title'] as String?,
+                    onPlanSelectedRecipe: widget.recipeToSeed?['id'] == null
+                        ? null
+                        : () => _showPlanRecipeSheet(
+                              context,
+                              plan,
+                              widget.recipeToSeed!,
+                            ),
                   ),
                   const SizedBox(height: 16),
                   ...List.generate(
@@ -84,7 +97,7 @@ class WeeklyPlannerScreen extends ConsumerWidget {
                     (index) => Padding(
                       padding: const EdgeInsets.only(bottom: 14),
                       child: _PlannerDaySection(
-                        label: _dayLabels[index],
+                        label: WeeklyPlannerScreen._dayLabels[index],
                         entries: entriesByDay[index] ?? const [],
                         isToday: DateTime.now().weekday - 1 == index,
                         completedPlanEntryIds: completedPlanEntryIds,
@@ -100,6 +113,165 @@ class WeeklyPlannerScreen extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _showPlanRecipeSheet(
+    BuildContext context,
+    MealPlan plan,
+    Map<String, dynamic> recipeToSeed,
+  ) async {
+    final recipeId = recipeToSeed['id'] as String?;
+    final recipeTitle = recipeToSeed['title'] as String? ?? 'Recipe';
+    if (recipeId == null) return;
+
+    var selectedDay = plannerDayOfWeekFor(DateTime.now());
+    var selectedMealType = PlannerMealType.dinner;
+    var servings = 1;
+    var isSubmitting = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Add to this week',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      recipeTitle,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Day',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(
+                        WeeklyPlannerScreen._dayLabels.length,
+                        (index) => ChoiceChip(
+                          label: Text(WeeklyPlannerScreen._dayLabels[index]),
+                          selected: selectedDay == index,
+                          onSelected: (_) =>
+                              setModalState(() => selectedDay = index),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Meal slot',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: PlannerMealType.values
+                          .map(
+                            (mealType) => ChoiceChip(
+                              label: Text(mealType.label),
+                              selected: selectedMealType == mealType,
+                              onSelected: (_) => setModalState(
+                                () => selectedMealType = mealType,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Servings',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<int>(
+                      segments: const [
+                        ButtonSegment(value: 1, label: Text('1')),
+                        ButtonSegment(value: 2, label: Text('2')),
+                        ButtonSegment(value: 3, label: Text('3')),
+                        ButtonSegment(value: 4, label: Text('4')),
+                      ],
+                      selected: {servings},
+                      onSelectionChanged: (selection) => setModalState(
+                        () => servings = selection.first,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                setModalState(() => isSubmitting = true);
+                                await ref
+                                    .read(mealPlanEditorProvider.notifier)
+                                    .addEntry(
+                                      mealPlanId: plan.id,
+                                      recipeId: recipeId,
+                                      dayOfWeek: selectedDay,
+                                      mealType: selectedMealType,
+                                      servings: servings,
+                                    );
+                                if (!context.mounted || !sheetContext.mounted) {
+                                  return;
+                                }
+                                if (ref.read(mealPlanEditorProvider) case AsyncError()) {
+                                  setModalState(() => isSubmitting = false);
+                                  return;
+                                }
+                                Navigator.of(sheetContext).pop();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      '$recipeTitle added to ${WeeklyPlannerScreen._dayLabels[selectedDay]} ${selectedMealType.label.toLowerCase()}.',
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        label: Text(
+                          isSubmitting ? 'Saving...' : 'Add to weekly plan',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -120,15 +292,15 @@ class _PlanHeaderCard extends StatelessWidget {
             Text(
               plan.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               '${plan.startDate.month}/${plan.startDate.day}/${plan.startDate.year} - ${plan.endDate.month}/${plan.endDate.day}/${plan.endDate.year}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -142,11 +314,13 @@ class _PlannerSummaryCard extends StatelessWidget {
     required this.totalCount,
     required this.completedCount,
     required this.recipeToSeedTitle,
+    required this.onPlanSelectedRecipe,
   });
 
   final int totalCount;
   final int completedCount;
   final String? recipeToSeedTitle;
+  final VoidCallback? onPlanSelectedRecipe;
 
   @override
   Widget build(BuildContext context) {
@@ -162,15 +336,15 @@ class _PlannerSummaryCard extends StatelessWidget {
             Text(
               'This week at a glance',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               '$completedCount of $totalCount planned meals have been logged.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
             const SizedBox(height: 12),
             LinearProgressIndicator(value: progress),
@@ -184,11 +358,38 @@ class _PlannerSummaryCard extends StatelessWidget {
               ],
             ),
             if (recipeToSeedTitle != null) ...[
-              const SizedBox(height: 14),
-              Text(
-                'Selected from recipes: $recipeToSeedTitle',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selected from recipes',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      recipeToSeedTitle!,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: onPlanSelectedRecipe,
+                      icon: const Icon(Icons.add_task),
+                      label: const Text('Add this recipe to the week'),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -228,8 +429,8 @@ class _PlannerDaySection extends StatelessWidget {
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 if (isToday)
@@ -245,8 +446,8 @@ class _PlannerDaySection extends StatelessWidget {
                     child: Text(
                       'Today',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                   ),
               ],
@@ -256,8 +457,8 @@ class _PlannerDaySection extends StatelessWidget {
               Text(
                 'No meals planned yet.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ...entries.map(
               (entry) => ListTile(
@@ -323,9 +524,13 @@ class _PlannerDaySection extends StatelessWidget {
 }
 
 class _EmptyPlannerState extends StatelessWidget {
-  const _EmptyPlannerState({required this.onCreate});
+  const _EmptyPlannerState({
+    required this.onCreate,
+    required this.selectedRecipeTitle,
+  });
 
   final VoidCallback onCreate;
+  final String? selectedRecipeTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -342,16 +547,18 @@ class _EmptyPlannerState extends StatelessWidget {
         Text(
           'No plan exists for this week yet',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
-          'Create the week and start assigning recipes to your days.',
+          selectedRecipeTitle == null
+              ? 'Create the week and start assigning recipes to your days.'
+              : 'Create the week first, then you can add $selectedRecipeTitle right away.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -381,8 +588,8 @@ class _PlannerMessage extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -390,8 +597,8 @@ class _PlannerMessage extends StatelessWidget {
               body,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -420,14 +627,14 @@ class _SummaryPill extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ],
       ),

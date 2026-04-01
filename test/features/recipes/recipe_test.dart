@@ -56,4 +56,35 @@ void main() {
     expect(decoded.totalSaves, 54);
     expect(decoded.totalReviews, 19);
   });
+
+  test('prefers seeded aggregate counts when live stats are still sparse', () {
+    final decoded = Recipe.fromJson({
+      'id': 'recipe-3',
+      'created_by': 'user-1',
+      'title': 'Loaded Greek Chicken Power Bowls',
+      'servings': 4,
+      'calories': 2480,
+      'protein_g': 224,
+      'carbs_g': 220,
+      'fat_g': 72,
+      'average_rating': 4.9,
+      'total_ratings': 41,
+      'total_saves': 54,
+      'total_reviews': 19,
+      'ingredients': const [],
+      'instructions': const ['Prep and portion.'],
+      'community_recipe_stats': {
+        'average_rating': 0,
+        'total_ratings': 0,
+        'total_saves': 1,
+        'total_reviews': 0,
+      },
+      'created_at': '2026-04-01T00:00:00Z',
+    });
+
+    expect(decoded.averageRating, 4.9);
+    expect(decoded.totalRatings, 41);
+    expect(decoded.totalSaves, 54);
+    expect(decoded.totalReviews, 19);
+  });
 }

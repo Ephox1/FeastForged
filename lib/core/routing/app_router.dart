@@ -55,8 +55,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/app/planner',
             builder: (_, state) {
               final extra = state.extra;
+              final query = state.uri.queryParameters;
+              final seedRecipeId = query['seedRecipeId'];
+              final seedRecipeTitle = query['seedRecipeTitle'];
               return WeeklyPlannerScreen(
-                recipeToSeed: extra is Map<String, dynamic> ? extra : null,
+                recipeToSeed: extra is Map<String, dynamic>
+                    ? extra
+                    : seedRecipeId != null
+                    ? {
+                        'id': seedRecipeId,
+                        'title': seedRecipeTitle,
+                      }
+                    : null,
               );
             },
           ),

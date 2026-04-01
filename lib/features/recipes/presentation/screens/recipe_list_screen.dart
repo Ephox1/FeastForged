@@ -195,10 +195,14 @@ class _RecipeSection extends StatelessWidget {
                                     child: const Text('Log'),
                                   ),
                                   OutlinedButton(
-                                    onPressed: () => context.push(
-                                      '/app/planner',
-                                      extra: recipe.toJson(),
-                                    ),
+                                    onPressed: () {
+                                      final title = Uri.encodeComponent(
+                                        recipe.title,
+                                      );
+                                      context.go(
+                                        '/app/planner?seedRecipeId=${recipe.id}&seedRecipeTitle=$title',
+                                      );
+                                    },
                                     child: const Text('Plan'),
                                   ),
                                 ],
