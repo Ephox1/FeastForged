@@ -179,6 +179,30 @@ class _RecipeSection extends StatelessWidget {
                                     const _RecipeBadge(label: 'Public'),
                                 ],
                               ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  FilledButton.tonal(
+                                    onPressed: () => context.push(
+                                      '/log-meal',
+                                      extra: {
+                                        'recipe': recipe.toJson(),
+                                        'mealType': 'other',
+                                      },
+                                    ),
+                                    child: const Text('Log'),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: () => context.push(
+                                      '/app/planner',
+                                      extra: recipe.toJson(),
+                                    ),
+                                    child: const Text('Plan'),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -186,15 +210,9 @@ class _RecipeSection extends StatelessWidget {
                           onSelected: (value) async {
                             if (value == 'delete' && onDelete != null) {
                               await onDelete!(recipe.id);
-                            } else if (value == 'plan') {
-                              context.push('/app/planner', extra: recipe.toJson());
                             }
                           },
                           itemBuilder: (_) => [
-                            const PopupMenuItem(
-                              value: 'plan',
-                              child: Text('Plan'),
-                            ),
                             if (onDelete != null)
                               const PopupMenuItem(
                                 value: 'delete',
