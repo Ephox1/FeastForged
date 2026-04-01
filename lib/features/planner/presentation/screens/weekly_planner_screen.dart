@@ -119,6 +119,11 @@ class WeeklyPlannerScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    _PlannerCompletionSummary(
+                      entries: entries,
+                      completedPlanEntryIds: completedPlanEntryIds,
+                    ),
+                    const SizedBox(height: 16),
                     ...List.generate(7, (index) {
                       final dayEntries = entriesByDay[index] ?? const [];
                       return _PlannerDayCard(
@@ -152,6 +157,61 @@ class WeeklyPlannerScreen extends ConsumerWidget {
 
   String _formatDate(DateTime date) =>
       '${date.month}/${date.day}/${date.year}';
+}
+
+class _PlannerCompletionSummary extends StatelessWidget {
+  const _PlannerCompletionSummary({
+    required this.entries,
+    required this.completedPlanEntryIds,
+  });
+
+  final List<MealPlanEntry> entries;
+  final Set<String> completedPlanEntryIds;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = entries.length;
+    final completed = entries
+        .where((entry) => completedPlanEntryIds.contains(entry.id))
+        .length;
+    final remaining = total - completed;
+    final progress = total == 0 ? 0.0 : completed / total;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This week at a glance',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$completed of $total planned meals have been logged.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(value: progress),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _SummaryPill(label: 'Completed', value: '$completed'),
+                _SummaryPill(label: 'Remaining', value: '$remaining'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _PlannerDayCard extends StatelessWidget {
@@ -326,4 +386,39 @@ class _PlannerDayCard extends StatelessWidget {
     PlannerMealType.dinner => MealType.dinner,
     PlannerMealType.snack => MealType.snack,
   };
+}
+
+class _SummaryPill extends StatelessWidget {
+  const _SummaryPill({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

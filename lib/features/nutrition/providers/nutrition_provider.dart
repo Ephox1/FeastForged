@@ -66,7 +66,7 @@ class _RecentFoodsNotifier extends AsyncNotifier<List<Recipe>> {
 
   Future<void> addRecipe(Recipe recipe) async {
     final preferences = await ref.read(sharedPreferencesProvider.future);
-    final current = [...state.valueOrNull ?? []];
+    final current = List<Recipe>.from(state.valueOrNull ?? const <Recipe>[]);
 
     current.removeWhere((item) => item.id == recipe.id);
     current.insert(0, recipe);

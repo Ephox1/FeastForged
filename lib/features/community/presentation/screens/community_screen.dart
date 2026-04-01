@@ -2,13 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../recipes/domain/recipe.dart';
 import '../../providers/community_provider.dart';
 
-class CommunityScreen extends ConsumerWidget {
+enum _CommunitySort { trending, topRated, mostSaved, newest }
+
+class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends ConsumerState<CommunityScreen> {
+  _CommunitySort _sort = _CommunitySort.trending;
+
+  @override
+  Widget build(BuildContext context) {
     final communityRecipes = ref.watch(communityRecipesProvider);
 
     return Scaffold(
@@ -26,10 +36,24 @@ class CommunityScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'This is the first community foundation pass. Publishing, reviews, and saves can build on top of this.',
+              'Browse what looks strongest right now, then jump into detail to save, rate, review, or log it.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _CommunitySort.values
+                  .map(
+                    (sort) => ChoiceChip(
+                      label: Text(_labelFor(sort)),
+                      selected: _sort == sort,
+                      onSelected: (_) => setState(() => _sort = sort),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 16),
             communityRecipes.when(
@@ -37,9 +61,11 @@ class CommunityScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 32),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, _) => Text('Could not load community recipes: $error'),
+              error: (error, _) =>
+                  Text('Could not load community recipes: $error'),
               data: (recipes) {
-                if (recipes.isEmpty) {
+                final sorted = _sortedRecipes(recipes);
+                if (sorted.isEmpty) {
                   return const Card(
                     child: Padding(
                       padding: EdgeInsets.all(16),
@@ -49,7 +75,7 @@ class CommunityScreen extends ConsumerWidget {
                 }
 
                 return Column(
-                  children: recipes
+                  children: sorted
                       .map(
                         (recipe) => Card(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -106,6 +132,41 @@ class CommunityScreen extends ConsumerWidget {
       ),
     );
   }
+
+  List<Recipe> _sortedRecipes(List<Recipe> recipes) {
+    final sorted = [...recipes];
+    switch (_sort) {
+      case _CommunitySort.trending:
+        sorted.sort(
+          (a, b) => _trendScore(b).compareTo(_trendScore(a)),
+        );
+      case _CommunitySort.topRated:
+        sorted.sort((a, b) {
+          final rating = b.averageRating.compareTo(a.averageRating);
+          if (rating != 0) return rating;
+          return b.totalRatings.compareTo(a.totalRatings);
+        });
+      case _CommunitySort.mostSaved:
+        sorted.sort((a, b) => b.totalSaves.compareTo(a.totalSaves));
+      case _CommunitySort.newest:
+        sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return sorted;
+  }
+
+  double _trendScore(Recipe recipe) =>
+      (recipe.totalSaves * 3) +
+      (recipe.totalReviews * 2) +
+      recipe.totalRatings +
+      (recipe.averageRating * 4) +
+      recipe.downloads;
+
+  String _labelFor(_CommunitySort sort) => switch (sort) {
+    _CommunitySort.trending => 'Trending',
+    _CommunitySort.topRated => 'Top rated',
+    _CommunitySort.mostSaved => 'Most saved',
+    _CommunitySort.newest => 'Newest',
+  };
 }
 
 class _RecipeBadge extends StatelessWidget {
