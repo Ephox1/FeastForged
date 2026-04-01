@@ -21,6 +21,8 @@ class DashboardScreen extends ConsumerWidget {
     final logsAsync = ref.watch(todayLogsProvider);
     final plannedEntries = ref.watch(todayPlannedEntriesProvider);
     final plannedMacros = ref.watch(todayPlannedMacrosProvider);
+    final completedPlanEntryIds = ref.watch(todayCompletedPlanEntryIdsProvider);
+    final completionCount = ref.watch(todayCompletionCountProvider);
     final weeklyPlan = ref.watch(currentWeekPlanProvider);
 
     return Scaffold(
@@ -96,6 +98,8 @@ class DashboardScreen extends ConsumerWidget {
                     _PlannerSummaryCard(
                       profile: profile,
                       plannedEntries: plannedEntries,
+                      completedPlanEntryIds: completedPlanEntryIds,
+                      completionCount: completionCount,
                       planExists: weeklyPlan.valueOrNull != null,
                     ),
                     const SizedBox(height: 20),
@@ -205,11 +209,15 @@ class _PlannerSummaryCard extends StatelessWidget {
   const _PlannerSummaryCard({
     required this.profile,
     required this.plannedEntries,
+    required this.completedPlanEntryIds,
+    required this.completionCount,
     required this.planExists,
   });
 
   final UserProfile profile;
   final List<MealPlanEntry> plannedEntries;
+  final Set<String> completedPlanEntryIds;
+  final int completionCount;
   final bool planExists;
 
   @override
@@ -306,6 +314,13 @@ class _PlannerSummaryCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            Text(
+              '$completionCount of ${plannedEntries.length} planned meals logged today',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
             ...PlannerMealType.values
                 .where((mealType) => grouped.containsKey(mealType))
                 .map(
@@ -327,19 +342,39 @@ class _PlannerSummaryCard extends StatelessWidget {
                             subtitle: Text(
                               '${entry.servings} serving${entry.servings == 1 ? '' : 's'} | ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
                             ),
+                            leading: Icon(
+                              completedPlanEntryIds.contains(entry.id)
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: completedPlanEntryIds.contains(entry.id)
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                            ),
                             trailing: entry.recipe == null
                                 ? null
                                 : FilledButton.tonal(
-                                    onPressed: () => context.push(
-                                      '/log-meal',
-                                      extra: {
-                                        'recipe': entry.recipe!.toJson(),
-                                        'mealType': _mealTypeFor(entry.mealType).name,
-                                        'mealPlanEntryId': entry.id,
-                                        'servings': entry.servings,
-                                      },
+                                    onPressed: completedPlanEntryIds.contains(
+                                      entry.id,
+                                    )
+                                        ? null
+                                        : () => context.push(
+                                            '/log-meal',
+                                            extra: {
+                                              'recipe': entry.recipe!.toJson(),
+                                              'mealType':
+                                                  _mealTypeFor(entry.mealType)
+                                                      .name,
+                                              'mealPlanEntryId': entry.id,
+                                              'servings': entry.servings,
+                                            },
+                                          ),
+                                    child: Text(
+                                      completedPlanEntryIds.contains(entry.id)
+                                          ? 'Done'
+                                          : 'Log',
                                     ),
-                                    child: const Text('Log'),
                                   ),
                           ),
                         ),

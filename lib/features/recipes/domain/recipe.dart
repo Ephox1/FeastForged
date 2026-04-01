@@ -51,6 +51,10 @@ class Recipe {
     this.isCommunity = false,
     this.isPublic = false,
     this.downloads = 0,
+    this.averageRating = 0,
+    this.totalRatings = 0,
+    this.totalSaves = 0,
+    this.totalReviews = 0,
     required this.createdAt,
     this.updatedAt,
   });
@@ -73,6 +77,10 @@ class Recipe {
   final bool isCommunity;
   final bool isPublic;
   final int downloads;
+  final double averageRating;
+  final int totalRatings;
+  final int totalSaves;
+  final int totalReviews;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -84,6 +92,10 @@ class Recipe {
   factory Recipe.fromJson(Map<String, dynamic> json) {
     final instructionsValue = json['instructions'];
     final ingredientsValue = json['ingredients'];
+    final communityStatsList = json['community_recipe_stats'] as List?;
+    final communityStats = communityStatsList != null && communityStatsList.isNotEmpty
+        ? communityStatsList.first as Map<String, dynamic>
+        : null;
 
     return Recipe(
       id: json['id'] as String,
@@ -133,6 +145,22 @@ class Recipe {
           json['is_public'] as bool? ?? json['is_published'] as bool? ?? false,
       downloads:
           json['downloads'] as int? ?? json['times_cooked'] as int? ?? 0,
+      averageRating:
+          (json['average_rating'] as num?)?.toDouble() ??
+          (communityStats?['average_rating'] as num?)?.toDouble() ??
+          0,
+      totalRatings:
+          json['total_ratings'] as int? ??
+          communityStats?['total_ratings'] as int? ??
+          0,
+      totalSaves:
+          json['total_saves'] as int? ??
+          communityStats?['total_saves'] as int? ??
+          0,
+      totalReviews:
+          json['total_reviews'] as int? ??
+          communityStats?['total_reviews'] as int? ??
+          0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now().toUtc(),
@@ -161,6 +189,10 @@ class Recipe {
     'is_community': isCommunity,
     'is_public': isPublic,
     'downloads': downloads,
+    'average_rating': averageRating,
+    'total_ratings': totalRatings,
+    'total_saves': totalSaves,
+    'total_reviews': totalReviews,
     'created_at': createdAt.toIso8601String(),
     if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
   };

@@ -80,6 +80,16 @@ class CommunityScreen extends ConsumerWidget {
                                     _RecipeBadge(
                                       label: '${recipe.downloads} downloads',
                                     ),
+                                    _RecipeBadge(
+                                      label:
+                                          '${recipe.averageRating.toStringAsFixed(1)} stars',
+                                    ),
+                                    _RecipeBadge(
+                                      label: '${recipe.totalReviews} reviews',
+                                    ),
+                                    _RecipeBadge(
+                                      label: '${recipe.totalSaves} saves',
+                                    ),
                                   ],
                                 ),
                               ],

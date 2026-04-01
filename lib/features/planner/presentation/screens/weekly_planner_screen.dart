@@ -18,6 +18,7 @@ class WeeklyPlannerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(currentWeekPlanProvider);
     final entriesAsync = ref.watch(currentWeekEntriesProvider);
+    final completedPlanEntryIds = ref.watch(todayCompletedPlanEntryIdsProvider);
     final recipesAsync = ref.watch(myRecipesProvider);
 
     ref.listen(mealPlanEditorProvider, (_, next) {
@@ -123,6 +124,7 @@ class WeeklyPlannerScreen extends ConsumerWidget {
                       return _PlannerDayCard(
                         dayOfWeek: index,
                         entries: dayEntries,
+                        completedPlanEntryIds: completedPlanEntryIds,
                         recipesAsync: recipesAsync,
                         onAdd: (recipe, mealType) => ref
                             .read(mealPlanEditorProvider.notifier)
@@ -156,6 +158,7 @@ class _PlannerDayCard extends StatelessWidget {
   const _PlannerDayCard({
     required this.dayOfWeek,
     required this.entries,
+    required this.completedPlanEntryIds,
     required this.recipesAsync,
     required this.onAdd,
     required this.onDelete,
@@ -163,6 +166,7 @@ class _PlannerDayCard extends StatelessWidget {
 
   final int dayOfWeek;
   final List<MealPlanEntry> entries;
+  final Set<String> completedPlanEntryIds;
   final AsyncValue<List<Recipe>> recipesAsync;
   final void Function(Recipe recipe, PlannerMealType mealType) onAdd;
   final void Function(String entryId) onDelete;
@@ -229,22 +233,37 @@ class _PlannerDayCard extends StatelessWidget {
                 subtitle: Text(
                   '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
                 ),
+                leading: Icon(
+                  completedPlanEntryIds.contains(entry.id)
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: completedPlanEntryIds.contains(entry.id)
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 trailing: Wrap(
                   spacing: 8,
                   children: [
                     if (entry.recipe != null && _isToday(dayOfWeek))
                       IconButton(
-                        icon: const Icon(Icons.check_circle_outline),
-                        tooltip: 'Log as eaten',
-                        onPressed: () => context.push(
-                          '/log-meal',
-                          extra: {
-                            'recipe': entry.recipe!.toJson(),
-                            'mealType': _mealTypeFor(entry.mealType).name,
-                            'mealPlanEntryId': entry.id,
-                            'servings': entry.servings,
-                          },
+                        icon: Icon(
+                          completedPlanEntryIds.contains(entry.id)
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
                         ),
+                        tooltip: 'Log as eaten',
+                        onPressed: completedPlanEntryIds.contains(entry.id)
+                            ? null
+                            : () => context.push(
+                                  '/log-meal',
+                                  extra: {
+                                    'recipe': entry.recipe!.toJson(),
+                                    'mealType':
+                                        _mealTypeFor(entry.mealType).name,
+                                    'mealPlanEntryId': entry.id,
+                                    'servings': entry.servings,
+                                  },
+                                ),
                       ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline),

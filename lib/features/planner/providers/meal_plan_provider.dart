@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/macro_calculator.dart';
+import '../../nutrition/providers/nutrition_provider.dart';
 import '../data/meal_plan_repository.dart';
 import '../domain/meal_plan.dart';
 
@@ -35,6 +36,20 @@ final todayPlannedEntriesProvider = Provider<List<MealPlanEntry>>((ref) {
   final entries = ref.watch(currentWeekEntriesProvider).valueOrNull ?? const [];
   final dayOfWeek = plannerDayOfWeekFor(DateTime.now());
   return entries.where((entry) => entry.dayOfWeek == dayOfWeek).toList();
+});
+
+final todayCompletedPlanEntryIdsProvider = Provider<Set<String>>((ref) {
+  final logs = ref.watch(todayLogsProvider).valueOrNull ?? const [];
+  return logs
+      .map((entry) => entry.mealPlanEntryId)
+      .whereType<String>()
+      .toSet();
+});
+
+final todayCompletionCountProvider = Provider<int>((ref) {
+  final completed = ref.watch(todayCompletedPlanEntryIdsProvider);
+  final planned = ref.watch(todayPlannedEntriesProvider);
+  return planned.where((entry) => completed.contains(entry.id)).length;
 });
 
 final todayPlannedMacrosProvider = Provider<DailyMacros>((ref) {
