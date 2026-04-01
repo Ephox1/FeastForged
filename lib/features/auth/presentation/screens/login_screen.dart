@@ -41,10 +41,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final screenContext = context;
     final resetController = TextEditingController(text: _emailController.text);
     final dialogFormKey = GlobalKey<FormState>();
+    String? submittedEmail;
 
     await showDialog<void>(
       context: context,
       builder: (context) {
+        final navigator = Navigator.of(context);
+
         return AlertDialog(
           title: const Text('Reset password'),
           content: Form(
@@ -68,18 +71,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             FilledButton(
               onPressed: () async {
                 if (!(dialogFormKey.currentState?.validate() ?? false)) return;
+                submittedEmail = resetController.text.trim();
                 await ref
                     .read(authNotifierProvider.notifier)
                     .resetPassword(resetController.text);
-                if (!screenContext.mounted) return;
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(screenContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Password reset instructions sent to ${resetController.text.trim()}',
-                    ),
-                  ),
-                );
+                if (!context.mounted) return;
+                navigator.pop();
               },
               child: const Text('Send link'),
             ),
@@ -87,6 +84,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       },
     );
+
+    if (screenContext.mounted && submittedEmail != null) {
+      ScaffoldMessenger.of(screenContext).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Password reset instructions sent to $submittedEmail',
+          ),
+        ),
+      );
+    }
 
     resetController.dispose();
   }
