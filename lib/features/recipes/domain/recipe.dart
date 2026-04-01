@@ -92,10 +92,13 @@ class Recipe {
   factory Recipe.fromJson(Map<String, dynamic> json) {
     final instructionsValue = json['instructions'];
     final ingredientsValue = json['ingredients'];
-    final communityStatsList = json['community_recipe_stats'] as List?;
-    final communityStats = communityStatsList != null && communityStatsList.isNotEmpty
-        ? communityStatsList.first as Map<String, dynamic>
-        : null;
+    final communityStatsValue = json['community_recipe_stats'];
+    final communityStats = switch (communityStatsValue) {
+      final List list when list.isNotEmpty =>
+        list.first as Map<String, dynamic>,
+      final Map<String, dynamic> map => map,
+      _ => null,
+    };
 
     return Recipe(
       id: json['id'] as String,

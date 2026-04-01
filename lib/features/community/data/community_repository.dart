@@ -84,6 +84,12 @@ class CommunityRepository {
 
   String? get _userId => Supabase.instance.client.auth.currentUser?.id;
 
+  Map<String, dynamic>? _communityStatsFrom(dynamic value) => switch (value) {
+    final List list when list.isNotEmpty => list.first as Map<String, dynamic>,
+    final Map<String, dynamic> map => map,
+    _ => null,
+  };
+
   Future<List<Recipe>> fetchCommunityRecipes() async {
     final data = await supabase
         .from('recipes')
@@ -151,11 +157,7 @@ class CommunityRepository {
     return CommunityRecipeDetail(
       recipe: Recipe.fromJson(recipeData),
       stats: CommunityRecipeStats.fromJson(
-        (recipeData['community_recipe_stats'] as List?)?.cast<Map>().isNotEmpty ==
-                true
-            ? ((recipeData['community_recipe_stats'] as List).first
-                  as Map<String, dynamic>)
-            : null,
+        _communityStatsFrom(recipeData['community_recipe_stats']),
       ),
       reviews: (reviewsData as List)
           .map((item) => CommunityReview.fromJson(item as Map<String, dynamic>))
