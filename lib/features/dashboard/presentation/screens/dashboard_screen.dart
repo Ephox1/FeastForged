@@ -354,26 +354,30 @@ class _PlannerSummaryCard extends StatelessWidget {
                             ),
                             trailing: entry.recipe == null
                                 ? null
-                                : FilledButton.tonal(
-                                    onPressed: completedPlanEntryIds.contains(
-                                      entry.id,
-                                    )
-                                        ? null
-                                        : () => context.push(
-                                            '/log-meal',
-                                            extra: {
-                                              'recipe': entry.recipe!.toJson(),
-                                              'mealType':
-                                                  _mealTypeFor(entry.mealType)
-                                                      .name,
-                                              'mealPlanEntryId': entry.id,
-                                              'servings': entry.servings,
-                                            },
-                                          ),
-                                    child: Text(
-                                      completedPlanEntryIds.contains(entry.id)
-                                          ? 'Done'
-                                          : 'Log',
+                                : SizedBox(
+                                    width: 76,
+                                    child: FilledButton.tonal(
+                                      onPressed: completedPlanEntryIds.contains(
+                                        entry.id,
+                                      )
+                                          ? null
+                                          : () => context.push(
+                                              '/log-meal',
+                                              extra: {
+                                                'recipe':
+                                                    entry.recipe!.toJson(),
+                                                'mealType':
+                                                    _mealTypeFor(entry.mealType)
+                                                        .name,
+                                                'mealPlanEntryId': entry.id,
+                                                'servings': entry.servings,
+                                              },
+                                            ),
+                                      child: Text(
+                                        completedPlanEntryIds.contains(entry.id)
+                                            ? 'Done'
+                                            : 'Log',
+                                      ),
                                     ),
                                   ),
                           ),

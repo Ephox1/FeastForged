@@ -4,342 +4,154 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/utils/error_messages.dart';
 import '../../../nutrition/domain/meal_log_entry.dart';
-import '../../../recipes/domain/recipe.dart';
-import '../../../recipes/providers/recipe_provider.dart';
 import '../../domain/meal_plan.dart';
 import '../../providers/meal_plan_provider.dart';
 
-class WeeklyPlannerScreen extends ConsumerStatefulWidget {
+class WeeklyPlannerScreen extends ConsumerWidget {
   const WeeklyPlannerScreen({super.key, this.recipeToSeed});
 
   final Map<String, dynamic>? recipeToSeed;
 
-  @override
-  ConsumerState<WeeklyPlannerScreen> createState() =>
-      _WeeklyPlannerScreenState();
-}
+  static const _dayLabels = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
-class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
-  bool _seedHandled = false;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(currentWeekPlanProvider);
     final entriesAsync = ref.watch(currentWeekEntriesProvider);
     final completedPlanEntryIds = ref.watch(todayCompletedPlanEntryIdsProvider);
-    final recipesAsync = ref.watch(myRecipesProvider);
 
     ref.listen(mealPlanEditorProvider, (_, next) {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ErrorMessages.friendly(next.error)),
-          ),
+          SnackBar(content: Text(ErrorMessages.friendly(next.error))),
         );
       }
     });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Weekly planner')),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(currentWeekPlanProvider);
-          ref.invalidate(currentWeekEntriesProvider);
-          ref.invalidate(myRecipesProvider);
-        },
-        child: planAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(child: Text('Could not load plan: $error')),
-          data: (plan) {
-            if (plan == null) {
+      body: planAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _PlannerMessage(
+          title: 'Could not load your plan',
+          body: '$error',
+        ),
+        data: (plan) {
+          if (plan == null) {
+            return _EmptyPlannerState(
+              onCreate: () =>
+                  ref.read(mealPlanEditorProvider.notifier).createCurrentWeekPlan(),
+            );
+          }
+
+          return entriesAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => _PlannerMessage(
+              title: 'Could not load your meals',
+              body: '$error',
+            ),
+            data: (entries) {
+              final entriesByDay = <int, List<MealPlanEntry>>{};
+              for (final entry in entries) {
+                entriesByDay.putIfAbsent(entry.dayOfWeek, () => []).add(entry);
+              }
+
+              final completedCount = entries
+                  .where((entry) => completedPlanEntryIds.contains(entry.id))
+                  .length;
+
               return ListView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 children: [
-                  const SizedBox(height: 80),
-                  Icon(
-                    Icons.calendar_month_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                  _PlanHeaderCard(plan: plan),
+                  const SizedBox(height: 16),
+                  _PlannerSummaryCard(
+                    totalCount: entries.length,
+                    completedCount: completedCount,
+                    recipeToSeedTitle: recipeToSeed?['title'] as String?,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'No plan exists for this week yet',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Create the current week in Supabase and start assigning recipes by day.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: () => ref
-                        .read(mealPlanEditorProvider.notifier)
-                        .createCurrentWeekPlan(),
-                    child: const Text('Create this week'),
-                  ),
-                ],
-              );
-            }
-
-            _maybeHandleRecipeSeed(plan);
-
-            return entriesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  Center(child: Text('Could not load entries: $error')),
-              data: (entries) {
-                final entriesByDay = <int, List<MealPlanEntry>>{};
-                for (final entry in entries) {
-                  entriesByDay.putIfAbsent(entry.dayOfWeek, () => []).add(entry);
-                }
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-                  children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              plan.title,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${_formatDate(plan.startDate)} - ${_formatDate(plan.endDate)}',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _PlannerCompletionSummary(
-                      entries: entries,
-                      completedPlanEntryIds: completedPlanEntryIds,
-                    ),
-                    const SizedBox(height: 16),
-                    ...List.generate(7, (index) {
-                      final dayEntries = entriesByDay[index] ?? const [];
-                      return _PlannerDayCard(
-                        dayOfWeek: index,
-                        entries: dayEntries,
+                  ...List.generate(
+                    7,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _PlannerDaySection(
+                        label: _dayLabels[index],
+                        entries: entriesByDay[index] ?? const [],
+                        isToday: DateTime.now().weekday - 1 == index,
                         completedPlanEntryIds: completedPlanEntryIds,
-                        recipesAsync: recipesAsync,
-                        onAdd: (recipe, mealType) => ref
-                            .read(mealPlanEditorProvider.notifier)
-                            .addEntry(
-                              mealPlanId: plan.id,
-                              recipeId: recipe.id,
-                              dayOfWeek: index,
-                              mealType: mealType,
-                              servings: 1,
-                            ),
                         onDelete: (entryId) => ref
                             .read(mealPlanEditorProvider.notifier)
                             .deleteEntry(entryId),
-                      );
-                    }),
-                  ],
-                );
-              },
-            );
-          },
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlanHeaderCard extends StatelessWidget {
+  const _PlanHeaderCard({required this.plan});
+
+  final MealPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              plan.title,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${plan.startDate.month}/${plan.startDate.day}/${plan.startDate.year} - ${plan.endDate.month}/${plan.endDate.day}/${plan.endDate.year}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  void _maybeHandleRecipeSeed(MealPlan plan) {
-    if (_seedHandled || widget.recipeToSeed == null) {
-      return;
-    }
-
-    final recipe = Recipe.fromJson(widget.recipeToSeed!);
-    _seedHandled = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
-        return;
-      }
-
-      await _showSeedRecipeSheet(context, plan, recipe);
-    });
-  }
-
-  Future<void> _showSeedRecipeSheet(
-    BuildContext context,
-    MealPlan plan,
-    Recipe recipe,
-  ) async {
-    final selectedDay = ValueNotifier<int>(plannerDayOfWeekFor(DateTime.now()));
-    final selectedMealType = ValueNotifier<PlannerMealType>(
-      PlannerMealType.dinner,
-    );
-
-    try {
-      await showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (context) {
-          final colorScheme = Theme.of(context).colorScheme;
-          const days = [
-            'Mon',
-            'Tue',
-            'Wed',
-            'Thu',
-            'Fri',
-            'Sat',
-            'Sun',
-          ];
-
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              MediaQuery.of(context).viewInsets.bottom + 28,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Plan ${recipe.title}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Choose a day and meal slot for this recipe.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Day',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ValueListenableBuilder<int>(
-                  valueListenable: selectedDay,
-                  builder: (_, day, __) => Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: List.generate(
-                      days.length,
-                      (index) => ChoiceChip(
-                        label: Text(days[index]),
-                        selected: day == index,
-                        onSelected: (_) => selectedDay.value = index,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Meal',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ValueListenableBuilder<PlannerMealType>(
-                  valueListenable: selectedMealType,
-                  builder: (_, mealType, __) => Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: PlannerMealType.values
-                        .map(
-                          (value) => ChoiceChip(
-                            label: Text(value.label),
-                            selected: mealType == value,
-                            onSelected: (_) => selectedMealType.value = value,
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      await ref.read(mealPlanEditorProvider.notifier).addEntry(
-                            mealPlanId: plan.id,
-                            recipeId: recipe.id,
-                            dayOfWeek: selectedDay.value,
-                            mealType: selectedMealType.value,
-                            servings: 1,
-                          );
-                      if (!context.mounted) {
-                        return;
-                      }
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${recipe.title} added to ${days[selectedDay.value]} ${selectedMealType.value.label.toLowerCase()}.',
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    label: const Text('Add to plan'),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    } finally {
-      selectedDay.dispose();
-      selectedMealType.dispose();
-    }
-  }
-
-  String _formatDate(DateTime date) =>
-      '${date.month}/${date.day}/${date.year}';
 }
 
-class _PlannerCompletionSummary extends StatelessWidget {
-  const _PlannerCompletionSummary({
-    required this.entries,
-    required this.completedPlanEntryIds,
+class _PlannerSummaryCard extends StatelessWidget {
+  const _PlannerSummaryCard({
+    required this.totalCount,
+    required this.completedCount,
+    required this.recipeToSeedTitle,
   });
 
-  final List<MealPlanEntry> entries;
-  final Set<String> completedPlanEntryIds;
+  final int totalCount;
+  final int completedCount;
+  final String? recipeToSeedTitle;
 
   @override
   Widget build(BuildContext context) {
-    final total = entries.length;
-    final completed = entries
-        .where((entry) => completedPlanEntryIds.contains(entry.id))
-        .length;
-    final remaining = total - completed;
-    final progress = total == 0 ? 0.0 : completed / total;
+    final remaining = totalCount - completedCount;
+    final progress = totalCount == 0 ? 0.0 : completedCount / totalCount;
 
     return Card(
       child: Padding(
@@ -355,22 +167,31 @@ class _PlannerCompletionSummary extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '$completed of $total planned meals have been logged.',
+              '$completedCount of $totalCount planned meals have been logged.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 12),
             LinearProgressIndicator(value: progress),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
-                _SummaryPill(label: 'Completed', value: '$completed'),
+                _SummaryPill(label: 'Completed', value: '$completedCount'),
                 _SummaryPill(label: 'Remaining', value: '$remaining'),
               ],
             ),
+            if (recipeToSeedTitle != null) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Selected from recipes: $recipeToSeedTitle',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -378,37 +199,24 @@ class _PlannerCompletionSummary extends StatelessWidget {
   }
 }
 
-class _PlannerDayCard extends StatelessWidget {
-  const _PlannerDayCard({
-    required this.dayOfWeek,
+class _PlannerDaySection extends StatelessWidget {
+  const _PlannerDaySection({
+    required this.label,
     required this.entries,
+    required this.isToday,
     required this.completedPlanEntryIds,
-    required this.recipesAsync,
-    required this.onAdd,
     required this.onDelete,
   });
 
-  final int dayOfWeek;
+  final String label;
   final List<MealPlanEntry> entries;
+  final bool isToday;
   final Set<String> completedPlanEntryIds;
-  final AsyncValue<List<Recipe>> recipesAsync;
-  final void Function(Recipe recipe, PlannerMealType mealType) onAdd;
-  final void Function(String entryId) onDelete;
+  final Future<void> Function(String entryId) onDelete;
 
   @override
   Widget build(BuildContext context) {
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-
     return Card(
-      margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -418,31 +226,32 @@ class _PlannerDayCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    days[dayOfWeek],
+                    label,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                PopupMenuButton<PlannerMealType>(
-                  onSelected: (mealType) => _showRecipePicker(
-                    context,
-                    mealType,
-                    recipesAsync,
-                    onAdd,
+                if (isToday)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Today',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                  itemBuilder: (_) => PlannerMealType.values
-                      .map(
-                        (mealType) => PopupMenuItem(
-                          value: mealType,
-                          child: Text('Add ${mealType.label}'),
-                        ),
-                      )
-                      .toList(),
-                ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             if (entries.isEmpty)
               Text(
                 'No meals planned yet.',
@@ -451,187 +260,57 @@ class _PlannerDayCard extends StatelessWidget {
                 ),
               ),
             ...entries.map(
-              (entry) => _PlannedEntryTile(
-                entry: entry,
-                isToday: _isToday(dayOfWeek),
-                isCompleted: completedPlanEntryIds.contains(entry.id),
-                onDelete: () => onDelete(entry.id),
+              (entry) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(entry.recipe?.title ?? 'Recipe'),
+                subtitle: Text(
+                  '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
+                ),
+                leading: Icon(
+                  completedPlanEntryIds.contains(entry.id)
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  color: completedPlanEntryIds.contains(entry.id)
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                trailing: Wrap(
+                  spacing: 8,
+                  children: [
+                    if (entry.recipe != null && isToday)
+                      SizedBox(
+                        width: 76,
+                        child: FilledButton.tonal(
+                          onPressed: completedPlanEntryIds.contains(entry.id)
+                              ? null
+                              : () => context.push(
+                                    '/log-meal',
+                                    extra: {
+                                      'recipe': entry.recipe!.toJson(),
+                                      'mealType':
+                                          _mealTypeFor(entry.mealType).name,
+                                      'mealPlanEntryId': entry.id,
+                                      'servings': entry.servings,
+                                    },
+                                  ),
+                          child: Text(
+                            completedPlanEntryIds.contains(entry.id)
+                                ? 'Done'
+                                : 'Log',
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => onDelete(entry.id),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _showRecipePicker(
-    BuildContext context,
-    PlannerMealType mealType,
-    AsyncValue<List<Recipe>> recipesAsync,
-    void Function(Recipe recipe, PlannerMealType mealType) onAdd,
-  ) async {
-    final recipes = recipesAsync.valueOrNull ?? const <Recipe>[];
-    if (recipes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Create a recipe first, then plan it.')),
-      );
-      return;
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: recipes
-              .map(
-                (recipe) => ListTile(
-                  title: Text(recipe.title),
-                  subtitle: Text(
-                    '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    onAdd(recipe, mealType);
-                  },
-                ),
-              )
-              .toList(),
-        );
-      },
-    );
-  }
-
-  bool _isToday(int plannerDayOfWeek) => DateTime.now().weekday - 1 == plannerDayOfWeek;
-}
-
-class _PlannedEntryTile extends StatelessWidget {
-  const _PlannedEntryTile({
-    required this.entry,
-    required this.isToday,
-    required this.isCompleted,
-    required this.onDelete,
-  });
-
-  final MealPlanEntry entry;
-  final bool isToday;
-  final bool isCompleted;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final canLog = entry.recipe != null && isToday && !isCompleted;
-    final canOpen = entry.recipe != null && isToday;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Material(
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: canOpen ? () => _openLogMeal(context) : null,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Icon(
-                        isCompleted
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: isCompleted
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.recipe?.title ?? 'Recipe',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
-                          if (canOpen) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              isCompleted
-                                  ? 'Already logged for today'
-                                  : 'Tap anywhere on this card or use Log to add it to today.',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Delete from plan',
-                      onPressed: onDelete,
-                    ),
-                  ],
-                ),
-                if (entry.recipe != null && isToday) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      FilledButton.tonalIcon(
-                        onPressed: canLog ? () => _openLogMeal(context) : null,
-                        icon: Icon(
-                          isCompleted
-                              ? Icons.check_circle
-                              : Icons.restaurant_menu,
-                        ),
-                        label: Text(isCompleted ? 'Logged' : 'Log'),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openLogMeal(BuildContext context) {
-    if (entry.recipe == null) {
-      return;
-    }
-
-    context.push(
-      '/log-meal',
-      extra: {
-        'recipe': entry.recipe!.toJson(),
-        'mealType': _mealTypeFor(entry.mealType).name,
-        'mealPlanEntryId': entry.id,
-        'servings': entry.servings,
-      },
     );
   }
 
@@ -641,6 +320,84 @@ class _PlannedEntryTile extends StatelessWidget {
     PlannerMealType.dinner => MealType.dinner,
     PlannerMealType.snack => MealType.snack,
   };
+}
+
+class _EmptyPlannerState extends StatelessWidget {
+  const _EmptyPlannerState({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 100),
+        Icon(
+          Icons.calendar_month_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'No plan exists for this week yet',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Create the week and start assigning recipes to your days.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: onCreate,
+          child: const Text('Create this week'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlannerMessage extends StatelessWidget {
+  const _PlannerMessage({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SummaryPill extends StatelessWidget {

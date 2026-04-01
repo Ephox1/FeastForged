@@ -54,8 +54,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/app/planner',
             builder: (_, state) {
-              final extra = state.extra as Map<String, dynamic>?;
-              return WeeklyPlannerScreen(recipeToSeed: extra);
+              final extra = state.extra;
+              return WeeklyPlannerScreen(
+                recipeToSeed: extra is Map<String, dynamic> ? extra : null,
+              );
             },
           ),
           GoRoute(
@@ -107,8 +109,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/log-meal',
         builder: (_, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return LogMealScreen(foodData: extra);
+          final extra = state.extra;
+          return LogMealScreen(
+            foodData: extra is Map<String, dynamic> ? extra : null,
+          );
         },
       ),
     ],
