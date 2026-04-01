@@ -98,6 +98,20 @@ class CommunityRepository {
         .toList();
   }
 
+  Future<Set<String>> fetchSavedRecipeIds() async {
+    final userId = _userId;
+    if (userId == null) return <String>{};
+
+    final data = await supabase
+        .from('community_saves')
+        .select('recipe_id')
+        .eq('user_id', userId);
+
+    return (data as List)
+        .map((item) => (item as Map<String, dynamic>)['recipe_id'] as String)
+        .toSet();
+  }
+
   Future<CommunityRecipeDetail> fetchRecipeDetail(String recipeId) async {
     final userId = _userId;
 

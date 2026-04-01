@@ -11,6 +11,10 @@ final communityRecipesProvider = FutureProvider<List<Recipe>>((ref) async {
   return ref.watch(communityRepositoryProvider).fetchCommunityRecipes();
 });
 
+final savedRecipeIdsProvider = FutureProvider<Set<String>>((ref) async {
+  return ref.watch(communityRepositoryProvider).fetchSavedRecipeIds();
+});
+
 final recipeDetailProvider = FutureProvider.family<CommunityRecipeDetail, String>((
   ref,
   recipeId,
@@ -32,6 +36,7 @@ class _CommunityActionNotifier extends AsyncNotifier<void> {
           .read(communityRepositoryProvider)
           .toggleSave(recipeId, shouldSave: shouldSave);
       ref.invalidate(communityRecipesProvider);
+      ref.invalidate(savedRecipeIdsProvider);
       ref.invalidate(recipeDetailProvider(recipeId));
     });
   }

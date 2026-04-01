@@ -16,10 +16,12 @@ class CommunityScreen extends ConsumerStatefulWidget {
 
 class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   _CommunitySort _sort = _CommunitySort.trending;
+  bool _savedOnly = false;
 
   @override
   Widget build(BuildContext context) {
     final communityRecipes = ref.watch(communityRecipesProvider);
+    final savedRecipeIds = ref.watch(savedRecipeIdsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Community')),
@@ -45,15 +47,20 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _CommunitySort.values
-                  .map(
-                    (sort) => ChoiceChip(
-                      label: Text(_labelFor(sort)),
-                      selected: _sort == sort,
-                      onSelected: (_) => setState(() => _sort = sort),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                ..._CommunitySort.values.map(
+                  (sort) => ChoiceChip(
+                    label: Text(_labelFor(sort)),
+                    selected: _sort == sort,
+                    onSelected: (_) => setState(() => _sort = sort),
+                  ),
+                ),
+                FilterChip(
+                  label: const Text('Saved only'),
+                  selected: _savedOnly,
+                  onSelected: (value) => setState(() => _savedOnly = value),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             communityRecipes.when(
@@ -63,69 +70,87 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
               ),
               error: (error, _) =>
                   Text('Could not load community recipes: $error'),
-              data: (recipes) {
-                final sorted = _sortedRecipes(recipes);
-                if (sorted.isEmpty) {
-                  return const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('No public recipes available yet.'),
-                    ),
-                  );
-                }
+              data: (recipes) => savedRecipeIds.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) =>
+                    Text('Could not load saved recipes: $error'),
+                data: (savedIds) {
+                  final sorted = _sortedRecipes(recipes)
+                      .where(
+                        (recipe) => !_savedOnly || savedIds.contains(recipe.id),
+                      )
+                      .toList();
+                  if (sorted.isEmpty) {
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _savedOnly
+                              ? 'You have not saved any community recipes yet.'
+                              : 'No public recipes available yet.',
+                        ),
+                      ),
+                    );
+                  }
 
-                return Column(
-                  children: sorted
-                      .map(
-                        (recipe) => Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            onTap: () => context.push(
-                              '/recipes/${recipe.id}',
-                              extra: recipe,
-                            ),
-                            title: Text(recipe.title),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (recipe.description != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(recipe.description!),
+                  return Column(
+                    children: sorted
+                        .map(
+                          (recipe) => Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              onTap: () => context.push(
+                                '/recipes/${recipe.id}',
+                                extra: recipe,
+                              ),
+                              title: Text(recipe.title),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (recipe.description != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Text(recipe.description!),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _RecipeBadge(
+                                        label:
+                                            '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
+                                      ),
+                                      _RecipeBadge(
+                                        label: '${recipe.downloads} downloads',
+                                      ),
+                                      _RecipeBadge(
+                                        label:
+                                            '${recipe.averageRating.toStringAsFixed(1)} stars',
+                                      ),
+                                      _RecipeBadge(
+                                        label: '${recipe.totalReviews} reviews',
+                                      ),
+                                      _RecipeBadge(
+                                        label: '${recipe.totalSaves} saves',
+                                      ),
+                                      if (savedIds.contains(recipe.id))
+                                        const _RecipeBadge(label: 'Saved'),
+                                    ],
                                   ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _RecipeBadge(
-                                      label:
-                                          '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
-                                    ),
-                                    _RecipeBadge(
-                                      label: '${recipe.downloads} downloads',
-                                    ),
-                                    _RecipeBadge(
-                                      label:
-                                          '${recipe.averageRating.toStringAsFixed(1)} stars',
-                                    ),
-                                    _RecipeBadge(
-                                      label: '${recipe.totalReviews} reviews',
-                                    ),
-                                    _RecipeBadge(
-                                      label: '${recipe.totalSaves} saves',
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                );
-              },
+                        )
+                        .toList(),
+                  );
+                },
+              ),
             ),
           ],
         ),
