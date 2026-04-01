@@ -287,50 +287,11 @@ class _PlannerDayCard extends StatelessWidget {
                 ),
               ),
             ...entries.map(
-              (entry) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(entry.recipe?.title ?? 'Recipe'),
-                subtitle: Text(
-                  '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
-                ),
-                leading: Icon(
-                  completedPlanEntryIds.contains(entry.id)
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
-                  color: completedPlanEntryIds.contains(entry.id)
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                trailing: Wrap(
-                  spacing: 8,
-                  children: [
-                    if (entry.recipe != null && _isToday(dayOfWeek))
-                      IconButton(
-                        icon: Icon(
-                          completedPlanEntryIds.contains(entry.id)
-                              ? Icons.check_circle
-                              : Icons.check_circle_outline,
-                        ),
-                        tooltip: 'Log as eaten',
-                        onPressed: completedPlanEntryIds.contains(entry.id)
-                            ? null
-                            : () => context.push(
-                                  '/log-meal',
-                                  extra: {
-                                    'recipe': entry.recipe!.toJson(),
-                                    'mealType':
-                                        _mealTypeFor(entry.mealType).name,
-                                    'mealPlanEntryId': entry.id,
-                                    'servings': entry.servings,
-                                  },
-                                ),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => onDelete(entry.id),
-                    ),
-                  ],
-                ),
+              (entry) => _PlannedEntryTile(
+                entry: entry,
+                isToday: _isToday(dayOfWeek),
+                isCompleted: completedPlanEntryIds.contains(entry.id),
+                onDelete: () => onDelete(entry.id),
               ),
             ),
           ],
@@ -379,6 +340,136 @@ class _PlannerDayCard extends StatelessWidget {
   }
 
   bool _isToday(int plannerDayOfWeek) => DateTime.now().weekday - 1 == plannerDayOfWeek;
+}
+
+class _PlannedEntryTile extends StatelessWidget {
+  const _PlannedEntryTile({
+    required this.entry,
+    required this.isToday,
+    required this.isCompleted,
+    required this.onDelete,
+  });
+
+  final MealPlanEntry entry;
+  final bool isToday;
+  final bool isCompleted;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final canLog = entry.recipe != null && isToday && !isCompleted;
+    final canOpen = entry.recipe != null && isToday;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: canOpen ? () => _openLogMeal(context) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        isCompleted
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: isCompleted
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.recipe?.title ?? 'Recipe',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                          if (canOpen) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              isCompleted
+                                  ? 'Already logged for today'
+                                  : 'Tap anywhere on this card or use Log to add it to today.',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: 'Delete from plan',
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+                if (entry.recipe != null && isToday) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: canLog ? () => _openLogMeal(context) : null,
+                        icon: Icon(
+                          isCompleted
+                              ? Icons.check_circle
+                              : Icons.restaurant_menu,
+                        ),
+                        label: Text(isCompleted ? 'Logged' : 'Log'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openLogMeal(BuildContext context) {
+    if (entry.recipe == null) {
+      return;
+    }
+
+    context.push(
+      '/log-meal',
+      extra: {
+        'recipe': entry.recipe!.toJson(),
+        'mealType': _mealTypeFor(entry.mealType).name,
+        'mealPlanEntryId': entry.id,
+        'servings': entry.servings,
+      },
+    );
+  }
 
   MealType _mealTypeFor(PlannerMealType mealType) => switch (mealType) {
     PlannerMealType.breakfast => MealType.breakfast,
