@@ -94,8 +94,16 @@ class UserProfile {
     if (displayName != null && displayName!.trim().isNotEmpty) {
       return displayName!.trim();
     }
-    if (username != null && username!.trim().isNotEmpty) {
-      return username!.trim();
+    final trimmedUsername = username?.trim();
+    final isGeneratedUsername =
+        trimmedUsername != null &&
+        RegExp(r'^user_[a-f0-9]+$', caseSensitive: false).hasMatch(
+          trimmedUsername,
+        );
+    if (trimmedUsername != null &&
+        trimmedUsername.isNotEmpty &&
+        !isGeneratedUsername) {
+      return trimmedUsername;
     }
     final emailName = email.split('@').first.trim();
     return emailName.isEmpty ? 'FeastForged user' : emailName;
