@@ -19,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSendingReset = false;
 
   @override
   void dispose() {
@@ -43,11 +44,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final dialogFormKey = GlobalKey<FormState>();
     String? submittedEmail;
 
-    await showDialog<void>(
+    final shouldSendReset = await showDialog<bool>(
       context: context,
       builder: (context) {
-        final navigator = Navigator.of(context);
-
         return AlertDialog(
           title: const Text('Reset password'),
           content: Form(
@@ -69,14 +68,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () async {
+              onPressed: () {
                 if (!(dialogFormKey.currentState?.validate() ?? false)) return;
                 submittedEmail = resetController.text.trim();
-                await ref
-                    .read(authNotifierProvider.notifier)
-                    .resetPassword(resetController.text);
-                if (!context.mounted) return;
-                navigator.pop();
+                Navigator.of(context).pop(true);
               },
               child: const Text('Send link'),
             ),
@@ -85,14 +80,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       },
     );
 
-    if (screenContext.mounted && submittedEmail != null) {
-      ScaffoldMessenger.of(screenContext).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Password reset instructions sent to $submittedEmail',
+    if (shouldSendReset == true && submittedEmail != null) {
+      setState(() => _isSendingReset = true);
+      try {
+        await ref.read(authRepositoryProvider).resetPassword(submittedEmail!);
+        if (!screenContext.mounted) return;
+        ScaffoldMessenger.of(screenContext).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Password reset instructions sent to $submittedEmail',
+            ),
           ),
-        ),
-      );
+        );
+      } catch (error) {
+        if (!screenContext.mounted) return;
+        ScaffoldMessenger.of(screenContext).showSnackBar(
+          SnackBar(
+            content: Text(ErrorMessages.friendly(error)),
+            backgroundColor: Theme.of(screenContext).colorScheme.error,
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isSendingReset = false);
+        }
+      }
     }
 
     resetController.dispose();
@@ -223,7 +235,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: authState is AsyncLoading
+                        onPressed: authState is AsyncLoading || _isSendingReset
                             ? null
                             : _showResetDialog,
                         child: const Text('Forgot password?'),
@@ -233,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     LoadingButton(
                       onPressed: _submit,
                       label: 'Sign in',
-                      isLoading: authState is AsyncLoading,
+                      isLoading: authState is AsyncLoading || _isSendingReset,
                     ),
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
