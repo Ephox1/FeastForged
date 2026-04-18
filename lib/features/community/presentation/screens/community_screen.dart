@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../recipes/domain/recipe.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 import '../../providers/community_provider.dart';
 
 enum _CommunitySort { trending, topRated, mostSaved, newest }
@@ -101,46 +102,72 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                         .map(
                           (recipe) => Card(
                             margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
                               onTap: () => context.push(
                                 '/recipes/${recipe.id}',
                                 extra: recipe,
                               ),
-                              title: Text(recipe.title),
-                              subtitle: Column(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (recipe.description != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Text(recipe.description!),
+                                  RecipeCoverImage(
+                                    recipe: recipe,
+                                    height: 180,
+                                    showOverlay: true,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          recipe.title,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        if (recipe.description != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(recipe.description!),
+                                        ],
+                                        const SizedBox(height: 12),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: [
+                                            _RecipeBadge(
+                                              label:
+                                                  '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
+                                            ),
+                                            _RecipeBadge(
+                                              label:
+                                                  '${recipe.downloads} downloads',
+                                            ),
+                                            _RecipeBadge(
+                                              label:
+                                                  '${recipe.averageRating.toStringAsFixed(1)} stars',
+                                            ),
+                                            _RecipeBadge(
+                                              label:
+                                                  '${recipe.totalReviews} reviews',
+                                            ),
+                                            _RecipeBadge(
+                                              label:
+                                                  '${recipe.totalSaves} saves',
+                                            ),
+                                            if (savedIds.contains(recipe.id))
+                                              const _RecipeBadge(
+                                                label: 'Saved',
+                                              ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      _RecipeBadge(
-                                        label:
-                                            '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
-                                      ),
-                                      _RecipeBadge(
-                                        label: '${recipe.downloads} downloads',
-                                      ),
-                                      _RecipeBadge(
-                                        label:
-                                            '${recipe.averageRating.toStringAsFixed(1)} stars',
-                                      ),
-                                      _RecipeBadge(
-                                        label: '${recipe.totalReviews} reviews',
-                                      ),
-                                      _RecipeBadge(
-                                        label: '${recipe.totalSaves} saves',
-                                      ),
-                                      if (savedIds.contains(recipe.id))
-                                        const _RecipeBadge(label: 'Saved'),
-                                    ],
                                   ),
                                 ],
                               ),

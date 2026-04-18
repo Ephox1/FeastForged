@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../shared/utils/error_messages.dart';
 import '../../../../shared/utils/validators.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 import '../../../community/providers/community_provider.dart';
 import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../domain/recipe.dart';
@@ -77,6 +78,13 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
+              RecipeCoverImage(
+                recipe: recipe,
+                height: 260,
+                borderRadius: BorderRadius.circular(28),
+                showOverlay: true,
+              ),
+              const SizedBox(height: 20),
               Text(
                 recipe.title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(

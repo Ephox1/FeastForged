@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/utils/error_messages.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 import '../../domain/recipe.dart';
 import '../../providers/recipe_provider.dart';
 
@@ -143,85 +144,111 @@ class _RecipeSection extends StatelessWidget {
                   .map(
                     (recipe) => Card(
                       margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
                         onTap: () =>
                             context.push('/recipes/${recipe.id}', extra: recipe),
-                        title: Text(
-                          recipe.title,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (recipe.description != null)
-                                Text(recipe.description!),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RecipeCoverImage(
+                              recipe: recipe,
+                              height: 200,
+                              showOverlay: true,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _RecipeBadge(
-                                    label: '${recipe.servings} servings',
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          recipe.title,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                      if (onDelete != null)
+                                        PopupMenuButton<String>(
+                                          onSelected: (value) async {
+                                            if (value == 'delete') {
+                                              await onDelete!(recipe.id);
+                                            }
+                                          },
+                                          itemBuilder: (_) => const [
+                                            PopupMenuItem(
+                                              value: 'delete',
+                                              child: Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
                                   ),
-                                  _RecipeBadge(
-                                    label:
-                                        '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
+                                  if (recipe.description != null) ...[
+                                    const SizedBox(height: 8),
+                                    Text(recipe.description!),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      _RecipeBadge(
+                                        label: '${recipe.servings} servings',
+                                      ),
+                                      _RecipeBadge(
+                                        label:
+                                            '${recipe.caloriesPerServing.toStringAsFixed(0)} kcal/serving',
+                                      ),
+                                      _RecipeBadge(
+                                        label:
+                                            '${recipe.proteinPerServing.toStringAsFixed(0)}p / ${recipe.carbsPerServing.toStringAsFixed(0)}c / ${recipe.fatPerServing.toStringAsFixed(0)}f',
+                                      ),
+                                      if (recipe.isPublic)
+                                        const _RecipeBadge(label: 'Public'),
+                                    ],
                                   ),
-                                  _RecipeBadge(
-                                    label:
-                                        '${recipe.proteinPerServing.toStringAsFixed(0)}p / ${recipe.carbsPerServing.toStringAsFixed(0)}c / ${recipe.fatPerServing.toStringAsFixed(0)}f',
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: FilledButton.tonal(
+                                          onPressed: () => context.push(
+                                            '/log-meal',
+                                            extra: {
+                                              'recipe': recipe.toJson(),
+                                              'mealType': 'other',
+                                            },
+                                          ),
+                                          child: const Text('Log'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            final title = Uri.encodeComponent(
+                                              recipe.title,
+                                            );
+                                            context.go(
+                                              '/app/planner?seedRecipeId=${recipe.id}&seedRecipeTitle=$title',
+                                            );
+                                          },
+                                          child: const Text('Plan'),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  if (recipe.isPublic)
-                                    const _RecipeBadge(label: 'Public'),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  FilledButton.tonal(
-                                    onPressed: () => context.push(
-                                      '/log-meal',
-                                      extra: {
-                                        'recipe': recipe.toJson(),
-                                        'mealType': 'other',
-                                      },
-                                    ),
-                                    child: const Text('Log'),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed: () {
-                                      final title = Uri.encodeComponent(
-                                        recipe.title,
-                                      );
-                                      context.go(
-                                        '/app/planner?seedRecipeId=${recipe.id}&seedRecipeTitle=$title',
-                                      );
-                                    },
-                                    child: const Text('Plan'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (value) async {
-                            if (value == 'delete' && onDelete != null) {
-                              await onDelete!(recipe.id);
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            if (onDelete != null)
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Delete'),
-                              ),
+                            ),
                           ],
                         ),
                       ),
