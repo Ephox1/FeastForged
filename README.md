@@ -24,13 +24,19 @@ Mid-project I redesigned the entire app around a custom dark design system calle
 
 The redesign introduced a single source of truth for tokens ([`design_tokens.dart`](lib/core/theme/design_tokens.dart)), a dark-first `ColorScheme` mapped explicitly (no `fromSeed`), and a reusable `ForgeTextStyles` helper that keeps numeric displays on tabular figures for clean alignment.
 
+| Before — Material 3 default | After — Forge dark system |
+| --- | --- |
+| ![Before: Material recipe list](docs/screenshots/recipes.jpg) | ![After: Forge dashboard](docs/screenshots/after/dashboard.jpg) |
+
 ---
 
-## Screenshots
+## Screenshots — Forge build on device (Samsung R5CX11HNPLD)
 
-| Recipes | Community | Recipe detail | Profile targets |
+| Sign in | Sign up | Dashboard | Recipes |
 | --- | --- | --- | --- |
-| ![Recipes](docs/screenshots/recipes.jpg) | ![Community](docs/screenshots/community.jpg) | ![Recipe detail](docs/screenshots/recipe-detail.jpg) | ![Edit targets](docs/screenshots/edit-targets.jpg) |
+| ![Sign in](docs/screenshots/after/signin.jpg) | ![Sign up](docs/screenshots/after/signup.jpg) | ![Dashboard](docs/screenshots/after/dashboard.jpg) | ![Recipes](docs/screenshots/after/recipes.jpg) |
+
+Notice the type scale doing real work: `Fraunces` serif for screen titles, `Inter` for body copy, `JetBrains Mono` with tabular figures for any number the user compares at a glance (calorie totals, macro splits, dates).
 
 ---
 
