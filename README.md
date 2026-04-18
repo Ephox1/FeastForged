@@ -1,150 +1,200 @@
 # FeastForged
 
-FeastForged is a Flutter + Supabase mobile app for meal planning, recipe discovery, macro tracking, and community recipe interaction.
+> Hit your macros without feeling like you're starving.
 
-I built this project as a working product-style app rather than a UI mock: it includes authentication, onboarding, planner flows, recipe creation, community actions, shopping-list foundations, Supabase migrations, and device-tested user flows.
+A Flutter + Supabase nutrition app with recipe discovery, weekly meal planning, macro tracking, and a community recipe feed. Built as a real working product, not a UI demo — auth, RLS-secured data, SQL migrations, device-tested flows.
 
-## What this project demonstrates
+[![Flutter](https://img.shields.io/badge/Flutter-3.32-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.8-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-RLS%20secured-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![analyze](https://img.shields.io/badge/flutter%20analyze-passing-brightgreen)](https://github.com/Ephox1/FeastForged)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-- End-to-end Flutter app architecture with feature-based organization
-- Supabase-backed auth, data modeling, and SQL migrations
-- Riverpod state management and GoRouter navigation
-- Product thinking around onboarding, empty states, and launch readiness
-- Real debugging and iteration on mobile-device issues, not just local happy paths
+---
 
-## Core features
+## Before / After — design system redesign
 
-- Email/password authentication with forgot-password support
-- Onboarding flow for calorie and macro target setup
-- Dashboard with calorie and macro progress
-- Weekly meal planner
-- Recipe browsing, creation, and detail views
-- Recipe-to-planner handoff
-- Recipe logging from planner into daily intake
-- Community recipe save and rating actions
-- Shopping-list and household foundations
+Mid-project I redesigned the entire app around a custom dark design system called **Forge**: dark-first palette, three-font type scale (Fraunces serif / Inter sans / JetBrains Mono for numerics), animated SVG macro rings, amber radial glow on hero cards.
 
-## Tech stack
+**See the full diff:** [`main...forge-design-system`](https://github.com/Ephox1/FeastForged/compare/main...forge-design-system) — *9 files changed, 960 additions, 310 deletions, 1 atomic commit.*
 
-- Flutter
-- Dart
-- Riverpod
-- GoRouter
-- Supabase
-- PostgreSQL / SQL migrations
+| Before (Material 3 default) | After (Forge design system) |
+| --- | --- |
+| ![Before](docs/screenshots/recipes.jpg) | *Captured on device — see [compare branch](https://github.com/Ephox1/FeastForged/tree/forge-design-system)* |
 
-## Architecture
+The redesign introduced a single source of truth for tokens ([`design_tokens.dart`](lib/core/theme/design_tokens.dart)), a dark-first `ColorScheme` mapped explicitly (no `fromSeed`), and a reusable `ForgeTextStyles` helper that keeps numeric displays on tabular figures for clean alignment.
 
-The app is organized by feature area under `lib/features`, with shared routing, theme, and models under `lib/core` and `lib/shared`.
-
-Primary feature areas:
-
-- `auth`
-- `dashboard`
-- `nutrition`
-- `planner`
-- `recipes`
-- `community`
-- `shopping`
-- `profile`
-- `household`
-
-## Database / Supabase
-
-This repo includes Supabase migrations under [`supabase/migrations`](supabase/migrations) for:
-
-- profile and onboarding data
-- recipes
-- meal plans and plan entries
-- recipe log entries
-- starter recipe seeds
-- starter week seeds
-- database hardening / performance alignment
-
-## Notable implementation work
-
-- Replaced fragile codegen-heavy MVP scaffolding with plain Dart models and providers when toolchain compatibility became an issue
-- Hardened auth flows around email confirmation and password reset
-- Fixed real Flutter layout/runtime issues discovered during Android device testing
-- Synced the app toward the live Supabase schema for recipes, plans, and logging
-- Improved launch-readiness UX with clearer actions, stronger empty states, and success feedback
-
-## Current app status
-
-This is a strong private-beta-quality app foundation. The repo includes working product flows, but it is still an in-progress product rather than a finished App Store release.
-
-What has been verified:
-
-- `flutter analyze`
-- `flutter test`
-- Android device launch
-- auth flows
-- planner -> log meal flow
-- recipe -> planner flow
-- community save / rating / planner handoff
+---
 
 ## Screenshots
 
-| Recipes | Community |
-| --- | --- |
-| ![Recipes](docs/screenshots/recipes.jpg) | ![Community](docs/screenshots/community.jpg) |
+| Recipes | Community | Recipe detail | Profile targets |
+| --- | --- | --- | --- |
+| ![Recipes](docs/screenshots/recipes.jpg) | ![Community](docs/screenshots/community.jpg) | ![Recipe detail](docs/screenshots/recipe-detail.jpg) | ![Edit targets](docs/screenshots/edit-targets.jpg) |
 
-| Recipe detail | Profile target editing |
-| --- | --- |
-| ![Recipe detail](docs/screenshots/recipe-detail.jpg) | ![Edit targets](docs/screenshots/edit-targets.jpg) |
+---
 
-Representative in-app surfaces currently covered in the product flow:
+## What's in it
 
-- Dashboard progress and macro tracking
-- Weekly meal planner
-- Recipe browse and recipe detail
-- Community browse with rating / save actions
-- Profile target editing
+**Product flows**
+- Email/password auth with forgot-password + reset-password lifecycle
+- Onboarding that captures calorie + macro targets
+- Dashboard with animated calorie ring and per-macro mini-rings
+- Weekly planner → daily log handoff
+- Recipe browse, detail, and create flows
+- Community recipe feed with save/rate actions
+- Shopping-list and household foundations
+
+**Engineering**
+- Supabase with RLS enabled on every table (`SELECT`/`INSERT`/`UPDATE`/`DELETE` policies using `auth.uid()`)
+- Numbered, reversible SQL migrations
+- Riverpod 2.x (plain providers, no codegen — see debugging story #1)
+- GoRouter with auth-gated redirects via a `ChangeNotifier` listening to Supabase auth state
+- `flutter analyze` passes clean, no suppressions
+- Device-tested on a physical Android (Samsung R5CX11HNPLD)
+
+---
+
+## Debugging stories
+
+Real issues I hit and how I worked through them. Written in the same format I'd use on a support ticket: **symptom → diagnosis → fix**.
+
+### 1. `analyzer_plugin 0.12.0` broke the entire codegen pipeline
+
+**Symptom:** `flutter pub get` resolved, but `dart run build_runner build` exploded with type errors inside `analyzer_plugin` — a transitive dep I never imported directly.
+
+**Diagnosis:** `build_runner` 2.4 pulled `analyzer_plugin 0.12.0`, which was incompatible with the `analyzer` API shipped in Dart 3.8.1. Upgrading `build_runner` to 2.13+ forced `riverpod_generator` 4.x, which required Dart 3.9+. I was in a version-constraint dead-end.
+
+**Fix:** Dropped all codegen packages (`build_runner`, `freezed`, `riverpod_annotation`, `riverpod_generator`, `custom_lint`) and rewrote providers in plain Dart. The deliberate tradeoff: lose a little boilerplate convenience, gain a stable toolchain today. Revisitable when the project moves to Dart 3.9+.
+
+### 2. Android NDK version mismatch warning
+
+**Symptom:** `flutter build apk` printed a multi-plugin warning about `path_provider_android`, `url_launcher_android`, and three others requiring NDK `27.0.12077973`, but the project was on `26.3.11579264`.
+
+**Diagnosis:** Flutter plugins ship with minimum NDK versions in their manifests. When you don't pin an NDK version in `android/app/build.gradle.kts`, Gradle picks the installed SDK default, which may be behind the plugin requirements. The warning is non-fatal but signals drift.
+
+**Fix:** Pinned `android { ndkVersion = "27.0.12077973" }` in the app-level Gradle file. Backward-compatible per Android docs, so no runtime impact on older devices.
+
+### 3. "Invalid API key" on every Supabase call
+
+**Symptom:** App built and launched, but every auth call returned `Invalid API key`.
+
+**Diagnosis:** Supabase now issues two key formats — legacy JWT (`eyJ...`) and the newer publishable format (`sb_publishable_...`). I'd baked in a publishable key that looked right but was from a different project. The SDK rejected it with the same message either way.
+
+**Fix:** Pulled the actual project's legacy JWT anon key and rebuilt with `--dart-define=SUPABASE_ANON_KEY=eyJ...`. Confirmed on device. Takeaway: prefer the project's legacy JWT anon key for `supabase-flutter` until every package in the SDK lineage fully supports publishable keys.
+
+### 4. Curly apostrophe truncating a string literal
+
+**Symptom:** Dart compiler error on the onboarding tagline: `'Hit your goals without feeling like you're starving.'`
+
+**Diagnosis:** The apostrophe in "you're" was a Unicode curly quote (`\u2019`), which Dart treated as end-of-literal. Silent until the string contained a straight `'` character, which the curly one technically is not.
+
+**Fix:** Wrapped the string in double quotes. Lesson: normalize quotes when pasting marketing copy into source.
+
+### 5. Signup navigation firing on the wrong state transition
+
+**Symptom:** After a successful signup, the app sometimes navigated to the dashboard before the email-confirmation screen, sometimes not at all.
+
+**Diagnosis:** The listener compared `authState is AsyncLoading` — but `authState` was captured from the *previous* provider tick, so the condition raced with the actual state change.
+
+**Fix:** Rewrote as `if (next is AsyncData<void> && !next.isLoading)` — check the incoming state, not the stale one. Straightforward once seen; easy to miss when you're thinking about it as "the current state."
+
+---
+
+## AI-assisted development, honestly
+
+This project was built with heavy use of AI coding tools — Codex and Claude Code. I'm flagging that deliberately because (a) it's how modern engineering teams actually ship, and (b) applying to Cursor, I should be clear about what AI tools I'm fluent with.
+
+**What I drove:** product decisions, architecture direction (feature-first layout, Riverpod vs. codegen, RLS-on-everything as a security policy), debugging through the five stories above, the Forge design system redesign brief, and final commit-hygiene / branch strategy decisions.
+
+**What AI accelerated:** boilerplate (model classes, repository skeletons, route configuration), initial Supabase migration drafts, theme scaffolding, widget composition on known patterns.
+
+**What breaks without a human:** debugging transitive dep version conflicts, diagnosing state-race bugs, reading device logs to figure out why nothing's rendering, choosing the right tradeoff when a codegen stack is wedged.
+
+I think that's the honest split for any serious project right now, and it's why I'm excited about technical support work for an AI editor — I've lived both sides of the workflow.
+
+---
+
+## Architecture
+
+```
+lib/
+  core/
+    models/          # Pure Dart domain models
+    routing/         # GoRouter + auth-gated redirect
+    supabase/        # Supabase client
+    theme/           # design_tokens.dart + app_theme.dart + ForgeTextStyles
+  features/
+    auth/            # Login, signup, reset, onboarding
+    dashboard/       # Hero + rings + planned-meal sections
+    nutrition/       # Recipe search, quick-add, log screens
+    planner/         # Weekly planner + daily log handoff
+    recipes/         # Browse, detail, create
+    community/       # Feed, save, rate
+    shopping/        # Shopping-list foundations
+    profile/         # Target editing, preferences
+    household/       # Household foundations
+  shared/
+    utils/
+    widgets/
+supabase/
+  migrations/        # Numbered, reversible SQL migrations
+  functions/         # Edge Functions (Deno/TypeScript) scaffold
+```
+
+---
 
 ## Running locally
 
-1. Create or connect a Supabase project.
-2. Apply the SQL migrations in [`supabase/migrations`](supabase/migrations).
-3. Run the app with your Supabase URL and anon key:
+1. Create a Supabase project (or connect an existing one).
+2. Apply the SQL migrations in [`supabase/migrations`](supabase/migrations) via `supabase db push` or the SQL editor.
+3. Run the app:
 
 ```bash
-flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
+flutter run \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-legacy-jwt-anon-key
 ```
 
-## Verification
+**Verification before commit:**
 
 ```bash
-flutter analyze
-flutter test
+flutter analyze   # must be clean
+flutter test      # providers + repositories
 ```
 
-Manual QA checklist:
+---
 
-- [MANUAL_SMOKE_TEST.md](MANUAL_SMOKE_TEST.md)
+## Supabase security posture
 
-Launch-readiness notes:
+Every table has RLS enabled and explicit policies — no `USING (true)`, no service-role key client-side. The migrations under `supabase/migrations/` are the authoritative schema.
 
-- [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)
-- [UX_REVIEW.md](UX_REVIEW.md)
-- [APPLICATION_NOTES.md](APPLICATION_NOTES.md)
-- [JOB_APPLICATION_COPY.md](JOB_APPLICATION_COPY.md)
+Auth flows covered:
+- Sign-up with email confirmation
+- Login with password
+- Forgot-password → reset-password deep link
+- Session refresh via `supabase-flutter` auth stream
 
-## Why this repo is worth reviewing
+---
 
-This project shows more than just UI polish. It demonstrates:
+## What I'd do next
 
-- shipping-oriented engineering tradeoffs
-- backend + frontend integration
-- database design and migration work
-- debugging against a real Android device
-- iterative product improvement across multiple feature areas
+- Full community review create/edit/delete verified on-device
+- Shopping-list generation from planned recipes
+- CI running `flutter analyze` + `flutter test` on every push
+- Release instrumentation + crash reporting (Sentry)
+- Store-ready Android signing + App Store submission assets
 
-## Next steps
+---
 
-If I continued this project, my next priorities would be:
+## Additional docs
 
-- full community review create/edit/delete verification on-device
-- richer shopping-list generation and editing
-- stronger analytics / release instrumentation
-- CI for analyze/test on every push
-- store-ready release assets and signing
+- [MANUAL_SMOKE_TEST.md](MANUAL_SMOKE_TEST.md) — pre-release QA checklist
+- [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md) — launch-readiness notes
+- [UX_REVIEW.md](UX_REVIEW.md) — design critique notes
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
