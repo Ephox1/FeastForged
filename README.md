@@ -83,27 +83,21 @@ What has been verified:
 - recipe -> planner flow
 - community save / rating / planner handoff
 
-## Screenshots
+## Product surfaces
 
-| Dashboard | Planner |
-| --- | --- |
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Planner](docs/screenshots/planner.png) |
+Representative in-app screens currently covered in the product flow:
 
-| Recipes | Community |
-| --- | --- |
-| ![Recipes](docs/screenshots/recipes.png) | ![Community](docs/screenshots/community.png) |
+- Dashboard progress and macro tracking
+- Weekly meal planner
+- Recipe browse and recipe detail
+- Community browse with rating / save actions
+- Profile target editing
 
 ## Running locally
 
 1. Create or connect a Supabase project.
 2. Apply the SQL migrations in [`supabase/migrations`](supabase/migrations).
-3. Run the app with your Supabase anon key:
-
-```bash
-flutter run --dart-define=SUPABASE_ANON_KEY=your-anon-key
-```
-
-Optional:
+3. Run the app with your Supabase URL and anon key:
 
 ```bash
 flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key

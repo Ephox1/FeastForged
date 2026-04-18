@@ -5,7 +5,7 @@ Use this checklist against an MVP-compatible Supabase project with the local
 
 ## Preconditions
 
-- App launches with a valid `SUPABASE_ANON_KEY`
+- App launches with valid `SUPABASE_URL` and `SUPABASE_ANON_KEY`
 - Seed foods from `002_seed_foods.sql` are present
 - Email confirmation behavior is known for the target Supabase environment
 

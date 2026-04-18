@@ -1,4 +1,4 @@
--- Recipe foundation for the broader FeastForged / PrepPal architecture
+-- Recipe foundation for the broader FeastForged architecture
 -- Migration: 003_recipes_schema
 
 CREATE TABLE IF NOT EXISTS public.recipes (

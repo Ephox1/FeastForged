@@ -8,7 +8,7 @@ One project that reflects how I like to build is FeastForged, a Flutter + Supaba
 
 ## Shorter Cover Letter Paragraph
 
-I recently built FeastForged, a Flutter + Supabase mobile app for meal planning, recipe discovery, and macro tracking. The project includes end-to-end product work across auth, state management, navigation, SQL migrations, planner flows, and mobile debugging on a real Android device. It’s a good example of how I approach engineering: build complete user flows, iterate against real runtime issues, and keep improving both technical quality and product experience.
+I recently built FeastForged, a Flutter + Supabase mobile app for meal planning, recipe discovery, and macro tracking. The project includes end-to-end product work across auth, state management, navigation, SQL migrations, planner flows, and mobile debugging on a real Android device. It's a good example of how I approach engineering: build complete user flows, iterate against real runtime issues, and keep improving both technical quality and product experience.
 
 ## LinkedIn Project Description
 
@@ -21,7 +21,7 @@ Built a Flutter + Supabase mobile app for recipe discovery, weekly meal planning
 
 ## Recruiter / Hiring Manager Message
 
-I’d love to share a project that reflects how I work in practice: FeastForged, a Flutter + Supabase mobile app I built around end-to-end product flows. It includes auth, onboarding, dashboard tracking, recipe and planner workflows, community interactions, and backend schema/migration work. I also used it as a vehicle for real mobile debugging and product polish on Android, so it shows both engineering depth and execution beyond static demo work.
+I'd love to share a project that reflects how I work in practice: FeastForged, a Flutter + Supabase mobile app I built around end-to-end product flows. It includes auth, onboarding, dashboard tracking, recipe and planner workflows, community interactions, and backend schema/migration work. I also used it as a vehicle for real mobile debugging and product polish on Android, so it shows both engineering depth and execution beyond static demo work.
 
 ## GitHub Repo Description
 
@@ -40,4 +40,4 @@ Flutter + Supabase mobile app for meal planning, recipe discovery, macro trackin
 
 ## Interview Soundbite
 
-FeastForged is probably the best single repo to look at if you want to understand how I build. It combines mobile frontend work, backend schema design, product iteration, and real-device debugging in one project, and it shows how I move from “feature exists” to “flow actually works.”
+FeastForged is probably the best single repo to look at if you want to understand how I build. It combines mobile frontend work, backend schema design, product iteration, and real-device debugging in one project, and it shows how I move from "feature exists" to "flow actually works."

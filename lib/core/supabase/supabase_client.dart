@@ -15,11 +15,14 @@ class StartupConfigException implements Exception {
 
 /// Initialize Supabase. Call once in main() before runApp().
 Future<void> initSupabase() async {
-  const url = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://vwaoorotgfogohorprqy.supabase.co',
-  );
+  const url = String.fromEnvironment('SUPABASE_URL');
   const anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  if (url.isEmpty) {
+    throw const StartupConfigException(
+      'Missing SUPABASE_URL. Launch the app with --dart-define=SUPABASE_URL=https://your-project.supabase.co.',
+    );
+  }
 
   if (anonKey.isEmpty) {
     throw const StartupConfigException(
