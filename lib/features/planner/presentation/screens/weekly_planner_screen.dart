@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/utils/error_messages.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../domain/meal_plan.dart';
 import '../../providers/meal_plan_provider.dart';
@@ -347,7 +348,16 @@ class _PlannerSummaryCard extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 12),
-            LinearProgressIndicator(value: progress),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 10,
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
+              ),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 10,
@@ -461,23 +471,69 @@ class _PlannerDaySection extends StatelessWidget {
                     ),
               ),
             ...entries.map(
-              (entry) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(entry.recipe?.title ?? 'Recipe'),
-                subtitle: Text(
-                  '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
+              (entry) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(22),
                 ),
-                leading: Icon(
-                  completedPlanEntryIds.contains(entry.id)
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
-                  color: completedPlanEntryIds.contains(entry.id)
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                trailing: Wrap(
-                  spacing: 8,
+                child: Row(
                   children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        RecipeTitleThumb(
+                          title: entry.recipe?.title ?? 'Recipe',
+                          size: 64,
+                          borderRadius: 18,
+                        ),
+                        Positioned(
+                          right: -4,
+                          bottom: -4,
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: Theme.of(context).colorScheme.surface,
+                            child: Icon(
+                              completedPlanEntryIds.contains(entry.id)
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              size: 18,
+                              color: completedPlanEntryIds.contains(entry.id)
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.recipe?.title ?? 'Recipe',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (entry.recipe != null && isToday)
                       SizedBox(
                         width: 76,

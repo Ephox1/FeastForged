@@ -96,6 +96,40 @@ class RecipeCoverImage extends StatelessWidget {
   }
 }
 
+class RecipeTitleThumb extends StatelessWidget {
+  const RecipeTitleThumb({
+    super.key,
+    required this.title,
+    this.size = 56,
+    this.borderRadius = 16,
+  });
+
+  final String title;
+  final double size;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = seededRecipeAssetForTitle(title);
+    final fallback = _FallbackRecipeArt(title: title);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: assetPath == null
+            ? fallback
+            : Image.asset(
+                assetPath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => fallback,
+              ),
+      ),
+    );
+  }
+}
+
 class _FallbackRecipeArt extends StatelessWidget {
   const _FallbackRecipeArt({required this.title});
 
@@ -109,10 +143,7 @@ class _FallbackRecipeArt extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colors.primaryContainer,
-            colors.surfaceContainerHighest,
-          ],
+          colors: [colors.primaryContainer, colors.surfaceContainerHighest],
         ),
       ),
       child: Padding(

@@ -9,6 +9,7 @@ import '../../../nutrition/domain/meal_log_entry.dart';
 import '../../../nutrition/providers/nutrition_provider.dart';
 import '../../../planner/domain/meal_plan.dart';
 import '../../../planner/providers/meal_plan_provider.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 import '../widgets/macro_ring.dart';
 import '../widgets/meal_section.dart';
 
@@ -67,19 +68,14 @@ class DashboardScreen extends ConsumerWidget {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
                   children: [
-                    Text(
-                      _todayLabel(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      hasPlannedMeals
+                    _DashboardHero(
+                      dateLabel: _todayLabel(),
+                      title: hasPlannedMeals
                           ? 'Today is anchored by your weekly plan.'
                           : 'Start today with a plan or a quick recipe log.',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      subtitle: hasPlannedMeals
+                          ? 'Track what you planned, what you logged, and how close you are to target.'
+                          : 'Recipes, macros, and planner progress all live here.',
                     ),
                     const SizedBox(height: 18),
                     _GoalStatusCard(profile: profile, totals: combinedMacros),
@@ -140,6 +136,63 @@ class DashboardScreen extends ConsumerWidget {
       'Dec',
     ];
     return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+  }
+}
+
+class _DashboardHero extends StatelessWidget {
+  const _DashboardHero({
+    required this.dateLabel,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String dateLabel;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.surface,
+            colors.primaryContainer.withValues(alpha: 0.9),
+          ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            dateLabel,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -336,43 +389,102 @@ class _PlannerSummaryCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         ...grouped[mealType]!.map(
-                          (entry) => ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(entry.recipe?.title ?? 'Recipe'),
-                            subtitle: Text(
-                              '${entry.servings} serving${entry.servings == 1 ? '' : 's'} | ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
+                          (entry) => Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(22),
                             ),
-                            leading: Icon(
-                              completedPlanEntryIds.contains(entry.id)
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              color: completedPlanEntryIds.contains(entry.id)
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                            ),
-                            trailing: entry.recipe == null
-                                ? null
-                                : SizedBox(
+                            child: Row(
+                              children: [
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    RecipeTitleThumb(
+                                      title: entry.recipe?.title ?? 'Recipe',
+                                      size: 64,
+                                      borderRadius: 18,
+                                    ),
+                                    Positioned(
+                                      right: -4,
+                                      bottom: -4,
+                                      child: CircleAvatar(
+                                        radius: 12,
+                                        backgroundColor:
+                                            Theme.of(context).colorScheme.surface,
+                                        child: Icon(
+                                          completedPlanEntryIds.contains(entry.id)
+                                              ? Icons.check_circle
+                                              : Icons.radio_button_unchecked,
+                                          size: 18,
+                                          color: completedPlanEntryIds
+                                                  .contains(entry.id)
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.recipe?.title ?? 'Recipe',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${entry.servings} serving${entry.servings == 1 ? '' : 's'} | ${((entry.recipe?.caloriesPerServing ?? 0) * entry.servings).toStringAsFixed(0)} kcal',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (entry.recipe != null)
+                                  SizedBox(
                                     width: 76,
                                     child: FilledButton.tonal(
-                                      onPressed: completedPlanEntryIds.contains(
-                                        entry.id,
-                                      )
-                                          ? null
-                                          : () => context.push(
-                                              '/log-meal',
-                                              extra: {
-                                                'recipe':
-                                                    entry.recipe!.toJson(),
-                                                'mealType':
-                                                    _mealTypeFor(entry.mealType)
-                                                        .name,
-                                                'mealPlanEntryId': entry.id,
-                                                'servings': entry.servings,
-                                              },
-                                            ),
+                                      onPressed:
+                                          completedPlanEntryIds.contains(entry.id)
+                                              ? null
+                                              : () => context.push(
+                                                    '/log-meal',
+                                                    extra: {
+                                                      'recipe':
+                                                          entry.recipe!.toJson(),
+                                                      'mealType':
+                                                          _mealTypeFor(
+                                                            entry.mealType,
+                                                          ).name,
+                                                      'mealPlanEntryId': entry.id,
+                                                      'servings': entry.servings,
+                                                    },
+                                                  ),
                                       child: Text(
                                         completedPlanEntryIds.contains(entry.id)
                                             ? 'Done'
@@ -380,6 +492,8 @@ class _PlannerSummaryCard extends StatelessWidget {
                                       ),
                                     ),
                                   ),
+                              ],
+                            ),
                           ),
                         ),
                       ],

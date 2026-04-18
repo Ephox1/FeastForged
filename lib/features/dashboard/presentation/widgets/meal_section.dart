@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/nutrition/domain/meal_log_entry.dart';
 import '../../../../features/nutrition/providers/nutrition_provider.dart';
+import '../../../../shared/widgets/recipe_cover_image.dart';
 
 class MealSection extends ConsumerWidget {
   const MealSection({
@@ -27,23 +28,38 @@ class MealSection extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: Column(
         children: [
-          ListTile(
-            title: Text(
-              mealType.label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              '${sectionCalories.toInt()} kcal',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        mealType.label,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${sectionCalories.toInt()} kcal',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  tooltip: 'Add recipe',
+                  onPressed: onAddPressed,
+                ),
               ),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              tooltip: 'Add recipe',
-              onPressed: onAddPressed,
             ),
           ),
           if (entries.isNotEmpty) const Divider(height: 1),
@@ -87,7 +103,12 @@ class _FoodLogTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
-      title: Text(entry.recipeTitle),
+      leading: RecipeTitleThumb(title: entry.recipeTitle),
+      title: Text(
+        entry.recipeTitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Text(
         '${entry.servings.toStringAsFixed(entry.servings % 1 == 0 ? 0 : 1)} servings',
       ),
