@@ -83,9 +83,17 @@ What has been verified:
 - recipe -> planner flow
 - community save / rating / planner handoff
 
-## Product surfaces
+## Screenshots
 
-Representative in-app screens currently covered in the product flow:
+| Recipes | Community |
+| --- | --- |
+| ![Recipes](docs/screenshots/recipes.jpg) | ![Community](docs/screenshots/community.jpg) |
+
+| Recipe detail | Profile target editing |
+| --- | --- |
+| ![Recipe detail](docs/screenshots/recipe-detail.jpg) | ![Edit targets](docs/screenshots/edit-targets.jpg) |
+
+Representative in-app surfaces currently covered in the product flow:
 
 - Dashboard progress and macro tracking
 - Weekly meal planner
