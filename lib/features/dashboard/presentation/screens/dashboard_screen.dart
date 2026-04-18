@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/user_profile.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/utils/macro_calculator.dart';
 import '../../../auth/providers/profile_provider.dart';
 import '../../../nutrition/domain/meal_log_entry.dart';
@@ -139,6 +141,8 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+/// Forge spec: eyebrow (JetBrains Mono uppercase) + serif title (Fraunces)
+/// + ambient amber radial glow. No Material app-bar.
 class _DashboardHero extends StatelessWidget {
   const _DashboardHero({
     required this.dateLabel,
@@ -152,42 +156,41 @@ class _DashboardHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.surface,
-            colors.primaryContainer.withValues(alpha: 0.9),
-          ],
+        borderRadius: BorderRadius.circular(DesignTokens.r3),
+        border: Border.all(color: DesignTokens.hairline),
+        boxShadow: DesignTokens.shadow1,
+        // Radial amber glow at top-left per spec:
+        // radial-gradient(120% 120% at 0% 0%, brand/22, transparent 60%)
+        gradient: const RadialGradient(
+          center: Alignment(-1.0, -1.0),
+          radius: 1.6,
+          colors: [DesignTokens.brandGlow, DesignTokens.surface],
+          stops: [0.0, 0.6],
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Eyebrow — JetBrains Mono uppercase
           Text(
-            dateLabel,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
+            dateLabel.toUpperCase(),
+            style: ForgeTextStyles.eyebrow(),
+          ),
+          const SizedBox(height: 10),
+          // Screen title — Fraunces serif
+          Text(
+            title,
+            style: ForgeTextStyles.screenTitle(fontSize: 22),
           ),
           const SizedBox(height: 8),
           Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colors.onSurfaceVariant,
-              height: 1.4,
+              color: DesignTokens.ink2,
+              height: 1.5,
             ),
           ),
         ],
@@ -209,12 +212,12 @@ class _GoalStatusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.surfaceContainerHighest,
-          ],
+        color: DesignTokens.surface2,
+        borderRadius: BorderRadius.circular(DesignTokens.r3),
+        border: Border.all(color: DesignTokens.hairline),
+        // suppress the original gradient block
+        gradient: const LinearGradient(
+          colors: [DesignTokens.surface2, DesignTokens.surface2],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -393,10 +396,10 @@ class _PlannerSummaryCard extends StatelessWidget {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(22),
+                              color: DesignTokens.surface3,
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.r2,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -577,8 +580,9 @@ class _TargetPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(DesignTokens.r1),
+        color: DesignTokens.surface3,
+        border: Border.all(color: DesignTokens.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

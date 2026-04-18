@@ -59,7 +59,7 @@ class MealSection extends ConsumerWidget {
                   tooltip: 'Add recipe',
                   onPressed: onAddPressed,
                 ),
-              ),
+              ],
             ),
           ),
           if (entries.isNotEmpty) const Divider(height: 1),

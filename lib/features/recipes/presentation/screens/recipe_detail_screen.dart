@@ -42,9 +42,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     if (ref.read(communityActionProvider) case AsyncError()) {
       return false;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(successMessage)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(successMessage)));
     return true;
   }
 
@@ -72,7 +72,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       appBar: AppBar(title: const Text('Recipe detail')),
       body: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Could not load recipe: $error')),
+        error: (error, _) =>
+            Center(child: Text('Could not load recipe: $error')),
         data: (detail) {
           final recipe = detail.recipe;
           return ListView(
@@ -167,22 +168,22 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                           final rating = index + 1;
                           final selected = detail.myRating == rating;
                           return ChoiceChip(
-                            label: Text('$rating star${rating == 1 ? '' : 's'}'),
+                            label: Text(
+                              '$rating star${rating == 1 ? '' : 's'}',
+                            ),
                             selected: selected,
                             onSelected: actionState is AsyncLoading
                                 ? null
                                 : (_) => _runCommunityAction(
-                                      () => ref
-                                          .read(
-                                            communityActionProvider.notifier,
-                                          )
-                                          .setRating(
-                                            recipeId: recipe.id,
-                                            rating: rating,
-                                          ),
-                                      successMessage:
-                                          'Saved your $rating-star rating.',
-                                    ),
+                                    () => ref
+                                        .read(communityActionProvider.notifier)
+                                        .setRating(
+                                          recipeId: recipe.id,
+                                          rating: rating,
+                                        ),
+                                    successMessage:
+                                        'Saved your $rating-star rating.',
+                                  ),
                           );
                         }),
                       ),
@@ -191,16 +192,16 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                         onPressed: actionState is AsyncLoading
                             ? null
                             : () => _runCommunityAction(
-                                  () => ref
-                                      .read(communityActionProvider.notifier)
-                                      .toggleSave(
-                                        recipeId: recipe.id,
-                                        shouldSave: !detail.isSaved,
-                                      ),
-                                  successMessage: detail.isSaved
-                                      ? 'Removed from your saved recipes.'
-                                      : 'Saved to your recipe library.',
-                                ),
+                                () => ref
+                                    .read(communityActionProvider.notifier)
+                                    .toggleSave(
+                                      recipeId: recipe.id,
+                                      shouldSave: !detail.isSaved,
+                                    ),
+                                successMessage: detail.isSaved
+                                    ? 'Removed from your saved recipes.'
+                                    : 'Saved to your recipe library.',
+                              ),
                         icon: Icon(
                           detail.isSaved
                               ? Icons.bookmark
@@ -223,9 +224,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                       children: [
                         Text(
                           'Leave a review',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -233,7 +233,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                           minLines: 3,
                           maxLines: 5,
                           decoration: const InputDecoration(
-                            hintText: 'What worked well? What would you change?',
+                            hintText:
+                                'What worked well? What would you change?',
                           ),
                           validator: (value) =>
                               Validators.required(value, fieldName: 'Review'),
@@ -243,7 +244,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                           onPressed: actionState is AsyncLoading
                               ? null
                               : () async {
-                                  if (!(_reviewFormKey.currentState?.validate() ??
+                                  if (!(_reviewFormKey.currentState
+                                          ?.validate() ??
                                       false)) {
                                     return;
                                   }
@@ -350,8 +352,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                                     recipeId: recipe.id,
                                                     reviewId: review.id,
                                                   ),
-                                              successMessage:
-                                                  'Review deleted.',
+                                              successMessage: 'Review deleted.',
                                             );
                                           }
                                         },
@@ -413,7 +414,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
               final didSucceed = await _runCommunityAction(
-                () => ref.read(communityActionProvider.notifier).updateReview(
+                () => ref
+                    .read(communityActionProvider.notifier)
+                    .updateReview(
                       recipeId: recipeId,
                       reviewId: reviewId,
                       content: controller.text,
@@ -450,9 +453,9 @@ class _RecipeSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             child,

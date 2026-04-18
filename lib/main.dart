@@ -39,8 +39,11 @@ class FeastForgedApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'FeastForged',
+      // Forge is dark-first. System mode is respected;
+      // dark is the designed experience.
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

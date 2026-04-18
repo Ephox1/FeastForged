@@ -55,8 +55,9 @@ class RecipeListScreen extends ConsumerWidget {
               title: 'My recipes',
               subtitle: 'Saved to the live Supabase recipes table.',
               asyncRecipes: myRecipes,
-              onDelete: (recipeId) =>
-                  ref.read(recipeEditorProvider.notifier).deleteRecipe(recipeId),
+              onDelete: (recipeId) => ref
+                  .read(recipeEditorProvider.notifier)
+                  .deleteRecipe(recipeId),
               trailing: TextButton(
                 onPressed: () => context.push('/recipes/new'),
                 child: const Text('Create'),
@@ -146,8 +147,10 @@ class _RecipeSection extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
-                        onTap: () =>
-                            context.push('/recipes/${recipe.id}', extra: recipe),
+                        onTap: () => context.push(
+                          '/recipes/${recipe.id}',
+                          extra: recipe,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -162,7 +165,8 @@ class _RecipeSection extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Text(

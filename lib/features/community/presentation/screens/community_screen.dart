@@ -33,9 +33,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           children: [
             Text(
               'Public recipes from the live Supabase project',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -189,9 +189,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     final sorted = [...recipes];
     switch (_sort) {
       case _CommunitySort.trending:
-        sorted.sort(
-          (a, b) => _trendScore(b).compareTo(_trendScore(a)),
-        );
+        sorted.sort((a, b) => _trendScore(b).compareTo(_trendScore(a)));
       case _CommunitySort.topRated:
         sorted.sort((a, b) {
           final rating = b.averageRating.compareTo(a.averageRating);
