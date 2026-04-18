@@ -1,30 +1,93 @@
 # FeastForged
 
-FeastForged is a Flutter nutrition-tracking app focused on simple logging, clear macro targets, and a low-friction daily dashboard.
+FeastForged is a Flutter + Supabase mobile app for meal planning, recipe discovery, macro tracking, and community recipe interaction.
 
-## MVP features
+I built this project as a working product-style app rather than a UI mock: it includes authentication, onboarding, planner flows, recipe creation, community actions, shopping-list foundations, Supabase migrations, and device-tested user flows.
 
-- Email/password authentication with Supabase
-- Forgot-password recovery and email-confirmation-safe signup handling
-- Onboarding flow for calorie and macro targets with an inline target preview
-- Dashboard with daily calorie and macro progress, empty-state guidance, and target editing
-- Search from a seeded food catalog with recents and popular starter foods
-- Meal logging by grams, meal type, and serving shortcut chips
-- Custom food creation for foods missing from the seed catalog
-- Delete logged entries
+## What this project demonstrates
 
-## Stack
+- End-to-end Flutter app architecture with feature-based organization
+- Supabase-backed auth, data modeling, and SQL migrations
+- Riverpod state management and GoRouter navigation
+- Product thinking around onboarding, empty states, and launch readiness
+- Real debugging and iteration on mobile-device issues, not just local happy paths
+
+## Core features
+
+- Email/password authentication with forgot-password support
+- Onboarding flow for calorie and macro target setup
+- Dashboard with calorie and macro progress
+- Weekly meal planner
+- Recipe browsing, creation, and detail views
+- Recipe-to-planner handoff
+- Recipe logging from planner into daily intake
+- Community recipe save and rating actions
+- Shopping-list and household foundations
+
+## Tech stack
 
 - Flutter
-- Flutter Riverpod
+- Dart
+- Riverpod
 - GoRouter
 - Supabase
+- PostgreSQL / SQL migrations
 
-## Local setup
+## Architecture
+
+The app is organized by feature area under `lib/features`, with shared routing, theme, and models under `lib/core` and `lib/shared`.
+
+Primary feature areas:
+
+- `auth`
+- `dashboard`
+- `nutrition`
+- `planner`
+- `recipes`
+- `community`
+- `shopping`
+- `profile`
+- `household`
+
+## Database / Supabase
+
+This repo includes Supabase migrations under [`supabase/migrations`](supabase/migrations) for:
+
+- profile and onboarding data
+- recipes
+- meal plans and plan entries
+- recipe log entries
+- starter recipe seeds
+- starter week seeds
+- database hardening / performance alignment
+
+## Notable implementation work
+
+- Replaced fragile codegen-heavy MVP scaffolding with plain Dart models and providers when toolchain compatibility became an issue
+- Hardened auth flows around email confirmation and password reset
+- Fixed real Flutter layout/runtime issues discovered during Android device testing
+- Synced the app toward the live Supabase schema for recipes, plans, and logging
+- Improved launch-readiness UX with clearer actions, stronger empty states, and success feedback
+
+## Current app status
+
+This is a strong private-beta-quality app foundation. The repo includes working product flows, but it is still an in-progress product rather than a finished App Store release.
+
+What has been verified:
+
+- `flutter analyze`
+- `flutter test`
+- Android device launch
+- auth flows
+- planner -> log meal flow
+- recipe -> planner flow
+- community save / rating / planner handoff
+
+## Running locally
 
 1. Create or connect a Supabase project.
-2. Apply the SQL migrations in `supabase/migrations`.
-3. Run the app with your anon key:
+2. Apply the SQL migrations in [`supabase/migrations`](supabase/migrations).
+3. Run the app with your Supabase anon key:
 
 ```bash
 flutter run --dart-define=SUPABASE_ANON_KEY=your-anon-key
@@ -36,24 +99,6 @@ Optional:
 flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
-## Supabase notes
-
-- If email confirmation is enabled, signup sends the user back to sign in after they verify their email.
-- Seed foods are added by `002_seed_foods.sql`.
-
-## Android release signing
-
-Create `android/key.properties` before shipping a release build:
-
-```properties
-storePassword=...
-keyPassword=...
-keyAlias=...
-storeFile=../upload-keystore.jks
-```
-
-Without that file, release signing is intentionally left unconfigured so debug keys are not used for production builds.
-
 ## Verification
 
 ```bash
@@ -61,8 +106,31 @@ flutter analyze
 flutter test
 ```
 
-For manual device testing, use `MANUAL_SMOKE_TEST.md`.
+Manual QA checklist:
 
-## Product alignment
+- [MANUAL_SMOKE_TEST.md](MANUAL_SMOKE_TEST.md)
 
-The current repo is a smaller MVP than the larger FeastForge / PrepPal architecture docs in the external vault. See `PROJECT_ALIGNMENT.md` for the gap analysis and recommended next build order.
+Launch-readiness notes:
+
+- [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)
+- [UX_REVIEW.md](UX_REVIEW.md)
+
+## Why this repo is worth reviewing
+
+This project shows more than just UI polish. It demonstrates:
+
+- shipping-oriented engineering tradeoffs
+- backend + frontend integration
+- database design and migration work
+- debugging against a real Android device
+- iterative product improvement across multiple feature areas
+
+## Next steps
+
+If I continued this project, my next priorities would be:
+
+- full community review create/edit/delete verification on-device
+- richer shopping-list generation and editing
+- stronger analytics / release instrumentation
+- CI for analyze/test on every push
+- store-ready release assets and signing
