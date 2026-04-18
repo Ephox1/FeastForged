@@ -83,6 +83,16 @@ What has been verified:
 - recipe -> planner flow
 - community save / rating / planner handoff
 
+## Screenshots
+
+| Dashboard | Planner |
+| --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Planner](docs/screenshots/planner.png) |
+
+| Recipes | Community |
+| --- | --- |
+| ![Recipes](docs/screenshots/recipes.png) | ![Community](docs/screenshots/community.png) |
+
 ## Running locally
 
 1. Create or connect a Supabase project.
@@ -115,6 +125,7 @@ Launch-readiness notes:
 - [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)
 - [UX_REVIEW.md](UX_REVIEW.md)
 - [APPLICATION_NOTES.md](APPLICATION_NOTES.md)
+- [JOB_APPLICATION_COPY.md](JOB_APPLICATION_COPY.md)
 
 ## Why this repo is worth reviewing
 
