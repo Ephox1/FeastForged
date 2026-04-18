@@ -114,6 +114,7 @@ Launch-readiness notes:
 
 - [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)
 - [UX_REVIEW.md](UX_REVIEW.md)
+- [APPLICATION_NOTES.md](APPLICATION_NOTES.md)
 
 ## Why this repo is worth reviewing
 
