@@ -24,7 +24,8 @@ class WeeklyPlannerScreen extends ConsumerStatefulWidget {
   ];
 
   @override
-  ConsumerState<WeeklyPlannerScreen> createState() => _WeeklyPlannerScreenState();
+  ConsumerState<WeeklyPlannerScreen> createState() =>
+      _WeeklyPlannerScreenState();
 }
 
 class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
@@ -46,16 +47,15 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
       appBar: AppBar(title: const Text('Weekly planner')),
       body: planAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _PlannerMessage(
-          title: 'Could not load your plan',
-          body: '$error',
-        ),
+        error: (error, _) =>
+            _PlannerMessage(title: 'Could not load your plan', body: '$error'),
         data: (plan) {
           if (plan == null) {
             return _EmptyPlannerState(
               selectedRecipeTitle: widget.recipeToSeed?['title'] as String?,
-              onCreate: () =>
-                  ref.read(mealPlanEditorProvider.notifier).createCurrentWeekPlan(),
+              onCreate: () => ref
+                  .read(mealPlanEditorProvider.notifier)
+                  .createCurrentWeekPlan(),
             );
           }
 
@@ -87,10 +87,10 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                     onPlanSelectedRecipe: widget.recipeToSeed?['id'] == null
                         ? null
                         : () => _showPlanRecipeSheet(
-                              context,
-                              plan,
-                              widget.recipeToSeed!,
-                            ),
+                            context,
+                            plan,
+                            widget.recipeToSeed!,
+                          ),
                   ),
                   const SizedBox(height: 16),
                   ...List.generate(
@@ -152,23 +152,22 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                   children: [
                     Text(
                       'Add to this week',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       recipeTitle,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       'Day',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -188,8 +187,8 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                     Text(
                       'Meal slot',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -211,8 +210,8 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                     Text(
                       'Servings',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     SegmentedButton<int>(
@@ -223,9 +222,8 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                         ButtonSegment(value: 4, label: Text('4')),
                       ],
                       selected: {servings},
-                      onSelectionChanged: (selection) => setModalState(
-                        () => servings = selection.first,
-                      ),
+                      onSelectionChanged: (selection) =>
+                          setModalState(() => servings = selection.first),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -247,7 +245,8 @@ class _WeeklyPlannerScreenState extends ConsumerState<WeeklyPlannerScreen> {
                                 if (!context.mounted || !sheetContext.mounted) {
                                   return;
                                 }
-                                if (ref.read(mealPlanEditorProvider) case AsyncError()) {
+                                if (ref.read(mealPlanEditorProvider)
+                                    case AsyncError()) {
                                   setModalState(() => isSubmitting = false);
                                   return;
                                 }
@@ -292,16 +291,16 @@ class _PlanHeaderCard extends StatelessWidget {
           children: [
             Text(
               plan.title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               '${plan.startDate.month}/${plan.startDate.day}/${plan.startDate.year} - ${plan.endDate.month}/${plan.endDate.day}/${plan.endDate.year}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -336,16 +335,16 @@ class _PlannerSummaryCard extends StatelessWidget {
           children: [
             Text(
               'This week at a glance',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               '$completedCount of $totalCount planned meals have been logged.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             ClipRRect(
@@ -353,9 +352,9 @@ class _PlannerSummaryCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 10,
-                backgroundColor: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
               ),
             ),
             const SizedBox(height: 14),
@@ -382,16 +381,15 @@ class _PlannerSummaryCard extends StatelessWidget {
                     Text(
                       'Selected from recipes',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       recipeToSeedTitle!,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     FilledButton.tonalIcon(
@@ -439,8 +437,8 @@ class _PlannerDaySection extends StatelessWidget {
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 if (isToday)
@@ -456,8 +454,8 @@ class _PlannerDaySection extends StatelessWidget {
                     child: Text(
                       'Today',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
               ],
@@ -467,8 +465,8 @@ class _PlannerDaySection extends StatelessWidget {
               Text(
                 'No meals planned yet.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ...entries.map(
               (entry) => Container(
@@ -493,7 +491,9 @@ class _PlannerDaySection extends StatelessWidget {
                           bottom: -4,
                           child: CircleAvatar(
                             radius: 12,
-                            backgroundColor: Theme.of(context).colorScheme.surface,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surface,
                             child: Icon(
                               completedPlanEntryIds.contains(entry.id)
                                   ? Icons.check_circle
@@ -501,9 +501,9 @@ class _PlannerDaySection extends StatelessWidget {
                               size: 18,
                               color: completedPlanEntryIds.contains(entry.id)
                                   ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -526,9 +526,9 @@ class _PlannerDaySection extends StatelessWidget {
                             '${entry.mealType.label} | ${entry.servings} serving${entry.servings == 1 ? '' : 's'}',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -541,15 +541,16 @@ class _PlannerDaySection extends StatelessWidget {
                           onPressed: completedPlanEntryIds.contains(entry.id)
                               ? null
                               : () => context.push(
-                                    '/log-meal',
-                                    extra: {
-                                      'recipe': entry.recipe!.toJson(),
-                                      'mealType':
-                                          _mealTypeFor(entry.mealType).name,
-                                      'mealPlanEntryId': entry.id,
-                                      'servings': entry.servings,
-                                    },
-                                  ),
+                                  '/log-meal',
+                                  extra: {
+                                    'recipe': entry.recipe!.toJson(),
+                                    'mealType': _mealTypeFor(
+                                      entry.mealType,
+                                    ).name,
+                                    'mealPlanEntryId': entry.id,
+                                    'servings': entry.servings,
+                                  },
+                                ),
                           child: Text(
                             completedPlanEntryIds.contains(entry.id)
                                 ? 'Done'
@@ -602,9 +603,9 @@ class _EmptyPlannerState extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'No plan exists for this week yet',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -613,8 +614,8 @@ class _EmptyPlannerState extends StatelessWidget {
               ? 'Create the week and start assigning recipes to your days.'
               : 'Create the week first, then you can add $selectedRecipeTitle right away.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -643,9 +644,9 @@ class _PlannerMessage extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -653,8 +654,8 @@ class _PlannerMessage extends StatelessWidget {
               body,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -683,14 +684,14 @@ class _SummaryPill extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

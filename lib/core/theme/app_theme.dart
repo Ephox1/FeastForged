@@ -162,10 +162,7 @@ class AppTheme {
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
-        hintStyle: GoogleFonts.inter(
-          color: DesignTokens.ink4,
-          fontSize: 14,
-        ),
+        hintStyle: GoogleFonts.inter(color: DesignTokens.ink4, fontSize: 14),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -312,60 +309,60 @@ class AppTheme {
   // Minimal light theme that keeps the brand amber; used only when the OS
   // is in light mode and the user hasn't chosen a preference.
   static ThemeData get light => dark.copyWith(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF7F2E8),
-        colorScheme: _colorScheme.copyWith(
-          brightness: Brightness.light,
-          surface: Colors.white,
-          onSurface: const Color(0xFF1A1107),
-          onSurfaceVariant: const Color(0xFF5B5346),
-        ),
-      );
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF7F2E8),
+    colorScheme: _colorScheme.copyWith(
+      brightness: Brightness.light,
+      surface: Colors.white,
+      onSurface: const Color(0xFF1A1107),
+      onSurfaceVariant: const Color(0xFF5B5346),
+    ),
+  );
 
   // ── Color scheme ───────────────────────────────────────────────────────────
 
   static ColorScheme get _colorScheme => const ColorScheme(
-        brightness: Brightness.dark,
-        // Backgrounds
-        surface: DesignTokens.surface,
-        // Primary = brand amber
-        primary: DesignTokens.brand,
-        onPrimary: DesignTokens.brandInk,
-        primaryContainer: DesignTokens.brandSoft,
-        onPrimaryContainer: DesignTokens.brand,
-        // Secondary = success green
-        secondary: DesignTokens.success,
-        onSecondary: Color(0xFF0D2B0C),
-        secondaryContainer: Color(0xFF1A3D19),
-        onSecondaryContainer: DesignTokens.success,
-        // Tertiary = info blue
-        tertiary: DesignTokens.info,
-        onTertiary: Color(0xFF0C1E36),
-        tertiaryContainer: Color(0xFF1A3050),
-        onTertiaryContainer: DesignTokens.info,
-        // Error = danger
-        error: DesignTokens.danger,
-        onError: Color(0xFF2D0A07),
-        errorContainer: Color(0xFF4A1010),
-        onErrorContainer: DesignTokens.danger,
-        // Surface hierarchy
-        onSurface: DesignTokens.ink,
-        onSurfaceVariant: DesignTokens.ink2,
-        surfaceContainerLowest: DesignTokens.bg,
-        surfaceContainerLow: DesignTokens.surface,
-        surfaceContainer: DesignTokens.surface2,
-        surfaceContainerHigh: DesignTokens.surface3,
-        surfaceContainerHighest: DesignTokens.surface3,
-        // Outlines
-        outline: DesignTokens.ink4,
-        outlineVariant: DesignTokens.hairline2,
-        // Misc
-        inverseSurface: DesignTokens.ink,
-        onInverseSurface: DesignTokens.bg,
-        inversePrimary: DesignTokens.brandSoft,
-        shadow: Color(0xFF000000),
-        scrim: Color(0xFF000000),
-      );
+    brightness: Brightness.dark,
+    // Backgrounds
+    surface: DesignTokens.surface,
+    // Primary = brand amber
+    primary: DesignTokens.brand,
+    onPrimary: DesignTokens.brandInk,
+    primaryContainer: DesignTokens.brandSoft,
+    onPrimaryContainer: DesignTokens.brand,
+    // Secondary = success green
+    secondary: DesignTokens.success,
+    onSecondary: Color(0xFF0D2B0C),
+    secondaryContainer: Color(0xFF1A3D19),
+    onSecondaryContainer: DesignTokens.success,
+    // Tertiary = info blue
+    tertiary: DesignTokens.info,
+    onTertiary: Color(0xFF0C1E36),
+    tertiaryContainer: Color(0xFF1A3050),
+    onTertiaryContainer: DesignTokens.info,
+    // Error = danger
+    error: DesignTokens.danger,
+    onError: Color(0xFF2D0A07),
+    errorContainer: Color(0xFF4A1010),
+    onErrorContainer: DesignTokens.danger,
+    // Surface hierarchy
+    onSurface: DesignTokens.ink,
+    onSurfaceVariant: DesignTokens.ink2,
+    surfaceContainerLowest: DesignTokens.bg,
+    surfaceContainerLow: DesignTokens.surface,
+    surfaceContainer: DesignTokens.surface2,
+    surfaceContainerHigh: DesignTokens.surface3,
+    surfaceContainerHighest: DesignTokens.surface3,
+    // Outlines
+    outline: DesignTokens.ink4,
+    outlineVariant: DesignTokens.hairline2,
+    // Misc
+    inverseSurface: DesignTokens.ink,
+    onInverseSurface: DesignTokens.bg,
+    inversePrimary: DesignTokens.brandSoft,
+    shadow: Color(0xFF000000),
+    scrim: Color(0xFF000000),
+  );
 
   // ── Text theme ─────────────────────────────────────────────────────────────
   // Fraunces for display/headline, Inter for everything else.
@@ -500,13 +497,12 @@ abstract final class ForgeTextStyles {
     double fontSize = 13,
     FontWeight fontWeight = FontWeight.w500,
     Color color = DesignTokens.ink2,
-  }) =>
-      GoogleFonts.jetBrainsMono(
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        color: color,
-        fontFeatures: const [FontFeature.tabularFigures()],
-      );
+  }) => GoogleFonts.jetBrainsMono(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
 
   /// Eyebrow label — uppercase mono, +1.5 letter-spacing.
   static TextStyle eyebrow({Color color = DesignTokens.ink3}) =>
@@ -524,12 +520,11 @@ abstract final class ForgeTextStyles {
   static TextStyle screenTitle({
     double fontSize = 24,
     Color color = DesignTokens.ink,
-  }) =>
-      GoogleFonts.fraunces(
-        fontSize: fontSize,
-        fontWeight: FontWeight.w400,
-        color: color,
-        letterSpacing: -0.4,
-        height: 1.2,
-      );
+  }) => GoogleFonts.fraunces(
+    fontSize: fontSize,
+    fontWeight: FontWeight.w400,
+    color: color,
+    letterSpacing: -0.4,
+    height: 1.2,
+  );
 }

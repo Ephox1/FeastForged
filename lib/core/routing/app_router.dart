@@ -62,10 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 recipeToSeed: extra is Map<String, dynamic>
                     ? extra
                     : seedRecipeId != null
-                    ? {
-                        'id': seedRecipeId,
-                        'title': seedRecipeTitle,
-                      }
+                    ? {'id': seedRecipeId, 'title': seedRecipeTitle}
                     : null,
               );
             },
@@ -89,8 +86,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(path: '/community', builder: (_, __) => const CommunityScreen()),
-      GoRoute(path: '/household', builder: (_, __) => const HouseholdMembersScreen()),
-      GoRoute(path: '/shopping', builder: (_, __) => const ShoppingListsScreen()),
+      GoRoute(
+        path: '/household',
+        builder: (_, __) => const HouseholdMembersScreen(),
+      ),
+      GoRoute(
+        path: '/shopping',
+        builder: (_, __) => const ShoppingListsScreen(),
+      ),
       GoRoute(
         path: '/recipes/new',
         builder: (_, __) => const RecipeEditorScreen(),

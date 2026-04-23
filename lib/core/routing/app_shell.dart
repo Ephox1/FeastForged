@@ -16,9 +16,7 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    final currentIndex = _tabs.indexWhere(
-      (tab) => location.startsWith(tab.$1),
-    );
+    final currentIndex = _tabs.indexWhere((tab) => location.startsWith(tab.$1));
 
     return Scaffold(
       body: child,
@@ -27,10 +25,7 @@ class AppShell extends StatelessWidget {
         onDestinationSelected: (index) => context.go(_tabs[index].$1),
         destinations: _tabs
             .map(
-              (tab) => NavigationDestination(
-                icon: Icon(tab.$3),
-                label: tab.$2,
-              ),
+              (tab) => NavigationDestination(icon: Icon(tab.$3), label: tab.$2),
             )
             .toList(),
       ),

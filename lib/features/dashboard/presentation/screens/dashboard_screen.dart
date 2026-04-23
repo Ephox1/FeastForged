@@ -175,16 +175,10 @@ class _DashboardHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Eyebrow — JetBrains Mono uppercase
-          Text(
-            dateLabel.toUpperCase(),
-            style: ForgeTextStyles.eyebrow(),
-          ),
+          Text(dateLabel.toUpperCase(), style: ForgeTextStyles.eyebrow()),
           const SizedBox(height: 10),
           // Screen title — Fraunces serif
-          Text(
-            title,
-            style: ForgeTextStyles.screenTitle(fontSize: 22),
-          ),
+          Text(title, style: ForgeTextStyles.screenTitle(fontSize: 22)),
           const SizedBox(height: 8),
           Text(
             subtitle,
@@ -227,9 +221,9 @@ class _GoalStatusCard extends StatelessWidget {
         children: [
           Text(
             'Today\'s target',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -248,10 +242,7 @@ class _GoalStatusCard extends StatelessWidget {
                 label: 'Protein',
                 value: '${profile.dailyProteinTarget}g',
               ),
-              _TargetPill(
-                label: 'Carbs',
-                value: '${profile.dailyCarbTarget}g',
-              ),
+              _TargetPill(label: 'Carbs', value: '${profile.dailyCarbTarget}g'),
               _TargetPill(label: 'Fat', value: '${profile.dailyFatTarget}g'),
             ],
           ),
@@ -287,9 +278,9 @@ class _PlannerSummaryCard extends StatelessWidget {
             children: [
               Text(
                 'Weekly planner',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -319,9 +310,9 @@ class _PlannerSummaryCard extends StatelessWidget {
             children: [
               Text(
                 'Today\'s planned meals',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -416,21 +407,26 @@ class _PlannerSummaryCard extends StatelessWidget {
                                       bottom: -4,
                                       child: CircleAvatar(
                                         radius: 12,
-                                        backgroundColor:
-                                            Theme.of(context).colorScheme.surface,
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
                                         child: Icon(
-                                          completedPlanEntryIds.contains(entry.id)
+                                          completedPlanEntryIds.contains(
+                                                entry.id,
+                                              )
                                               ? Icons.check_circle
                                               : Icons.radio_button_unchecked,
                                           size: 18,
-                                          color: completedPlanEntryIds
-                                                  .contains(entry.id)
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
+                                          color:
+                                              completedPlanEntryIds.contains(
+                                                entry.id,
+                                              )
+                                              ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ),
@@ -460,9 +456,9 @@ class _PlannerSummaryCard extends StatelessWidget {
                                             .textTheme
                                             .bodyMedium
                                             ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
                                             ),
                                       ),
                                     ],
@@ -473,21 +469,22 @@ class _PlannerSummaryCard extends StatelessWidget {
                                     width: 76,
                                     child: FilledButton.tonal(
                                       onPressed:
-                                          completedPlanEntryIds.contains(entry.id)
-                                              ? null
-                                              : () => context.push(
-                                                    '/log-meal',
-                                                    extra: {
-                                                      'recipe':
-                                                          entry.recipe!.toJson(),
-                                                      'mealType':
-                                                          _mealTypeFor(
-                                                            entry.mealType,
-                                                          ).name,
-                                                      'mealPlanEntryId': entry.id,
-                                                      'servings': entry.servings,
-                                                    },
-                                                  ),
+                                          completedPlanEntryIds.contains(
+                                            entry.id,
+                                          )
+                                          ? null
+                                          : () => context.push(
+                                              '/log-meal',
+                                              extra: {
+                                                'recipe': entry.recipe!
+                                                    .toJson(),
+                                                'mealType': _mealTypeFor(
+                                                  entry.mealType,
+                                                ).name,
+                                                'mealPlanEntryId': entry.id,
+                                                'servings': entry.servings,
+                                              },
+                                            ),
                                       child: Text(
                                         completedPlanEntryIds.contains(entry.id)
                                             ? 'Done'
@@ -595,9 +592,9 @@ class _TargetPill extends StatelessWidget {
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

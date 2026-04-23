@@ -95,9 +95,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         );
 
     if (!mounted || saved == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Recipe saved to Supabase')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Recipe saved to Supabase')));
     context.pop();
   }
 
@@ -153,10 +153,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _servingsController,
-                        decoration: const InputDecoration(labelText: 'Servings'),
+                        decoration: const InputDecoration(
+                          labelText: 'Servings',
+                        ),
                         keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            Validators.positiveNumber(value, fieldName: 'Servings'),
+                        validator: (value) => Validators.positiveNumber(
+                          value,
+                          fieldName: 'Servings',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -197,7 +201,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 const SizedBox(height: 12),
                 _MacroField(controller: _caloriesController, label: 'Calories'),
                 const SizedBox(height: 12),
-                _MacroField(controller: _proteinController, label: 'Protein (g)'),
+                _MacroField(
+                  controller: _proteinController,
+                  label: 'Protein (g)',
+                ),
                 const SizedBox(height: 12),
                 _MacroField(controller: _carbsController, label: 'Carbs (g)'),
                 const SizedBox(height: 12),

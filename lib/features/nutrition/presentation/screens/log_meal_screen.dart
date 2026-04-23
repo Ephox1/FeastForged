@@ -61,8 +61,7 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
     super.dispose();
   }
 
-  double get _servings =>
-      double.tryParse(_servingsController.text.trim()) ?? 1;
+  double get _servings => double.tryParse(_servingsController.text.trim()) ?? 1;
 
   List<double> get _servingShortcuts => const [0.5, 1, 1.5, 2, 3];
 
@@ -70,12 +69,14 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
     final recipe = _recipe;
     if (recipe == null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(mealLoggerProvider.notifier).logRecipe(
-      recipe: recipe,
-      servings: _servings,
-      mealType: _mealType,
-      mealPlanEntryId: _mealPlanEntryId,
-    );
+    await ref
+        .read(mealLoggerProvider.notifier)
+        .logRecipe(
+          recipe: recipe,
+          servings: _servings,
+          mealType: _mealType,
+          mealPlanEntryId: _mealPlanEntryId,
+        );
   }
 
   @override
@@ -180,8 +181,8 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                                       _servingsController.text.trim() ==
                                       servings.toString(),
                                   onSelected: (_) {
-                                    _servingsController.text =
-                                        servings.toString();
+                                    _servingsController.text = servings
+                                        .toString();
                                     setState(() {});
                                   },
                                 ),
@@ -236,9 +237,12 @@ class _LogMealScreenState extends ConsumerState<LogMealScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Based on the per-serving macros saved on this recipe.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                         const SizedBox(height: 12),
                         _NutritionRow(

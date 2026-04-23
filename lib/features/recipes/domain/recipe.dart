@@ -99,7 +99,8 @@ class Recipe {
       final Map<String, dynamic> map => map,
       _ => null,
     };
-    final recipeAverageRating = (json['average_rating'] as num?)?.toDouble() ?? 0;
+    final recipeAverageRating =
+        (json['average_rating'] as num?)?.toDouble() ?? 0;
     final statsAverageRating =
         (communityStats?['average_rating'] as num?)?.toDouble() ?? 0;
     final recipeTotalRatings = json['total_ratings'] as int? ?? 0;
@@ -112,9 +113,7 @@ class Recipe {
     return Recipe(
       id: json['id'] as String,
       createdBy:
-          json['created_by'] as String? ??
-          json['owner_id'] as String? ??
-          '',
+          json['created_by'] as String? ?? json['owner_id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       imageUrl: json['image_url'] as String?,
@@ -140,9 +139,8 @@ class Recipe {
       ingredients: ingredientsValue is List
           ? ingredientsValue
                 .map(
-                  (item) => RecipeIngredient.fromJson(
-                    item as Map<String, dynamic>,
-                  ),
+                  (item) =>
+                      RecipeIngredient.fromJson(item as Map<String, dynamic>),
                 )
                 .toList()
           : const [],
@@ -155,8 +153,7 @@ class Recipe {
           ((json['source'] as String?) == 'community'),
       isPublic:
           json['is_public'] as bool? ?? json['is_published'] as bool? ?? false,
-      downloads:
-          json['downloads'] as int? ?? json['times_cooked'] as int? ?? 0,
+      downloads: json['downloads'] as int? ?? json['times_cooked'] as int? ?? 0,
       averageRating: statsTotalRatings > 0
           ? statsAverageRating
           : recipeAverageRating,

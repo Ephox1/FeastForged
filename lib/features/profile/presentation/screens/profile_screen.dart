@@ -25,7 +25,8 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Could not load profile: $error')),
+        error: (error, _) =>
+            Center(child: Text('Could not load profile: $error')),
         data: (profile) {
           if (profile == null) {
             return const Center(child: Text('Complete onboarding first.'));
@@ -92,9 +93,9 @@ class _ProfileHeader extends StatelessWidget {
           children: [
             Text(
               profile.effectiveDisplayName,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(

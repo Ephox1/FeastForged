@@ -194,9 +194,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     groupValue: _activityLevel,
                     title: Text(level.label),
                     subtitle: Text(_activityDescription(level)),
-                    onChanged: (v) => setState(
-                      () => _activityLevel = v ?? _activityLevel,
-                    ),
+                    onChanged: (v) =>
+                        setState(() => _activityLevel = v ?? _activityLevel),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -296,9 +295,9 @@ class _TargetPreviewCard extends StatelessWidget {
           children: [
             Text(
               'Daily target preview',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -345,9 +344,12 @@ class _TargetPreviewCard extends StatelessWidget {
   }
 
   String _goalMessage(Goal goal) => switch (goal) {
-    Goal.lose => 'This sets up a gentle deficit so you can cut without wrecking your routine.',
-    Goal.maintain => 'This keeps your intake steady so you can build consistency first.',
-    Goal.gain => 'This nudges intake upward to support recovery and muscle gain.',
+    Goal.lose =>
+      'This sets up a gentle deficit so you can cut without wrecking your routine.',
+    Goal.maintain =>
+      'This keeps your intake steady so you can build consistency first.',
+    Goal.gain =>
+      'This nudges intake upward to support recovery and muscle gain.',
   };
 }
 

@@ -30,8 +30,8 @@ class HouseholdMember {
         userId: json['user_id'] as String,
         name: json['name'] as String,
         age: json['age'] as int?,
-        dietaryPreferences:
-            ((json['dietary_preferences'] as List?) ?? const []).cast<String>(),
+        dietaryPreferences: ((json['dietary_preferences'] as List?) ?? const [])
+            .cast<String>(),
         allergies: ((json['allergies'] as List?) ?? const []).cast<String>(),
         createdAt: DateTime.parse(json['created_at'] as String),
       );

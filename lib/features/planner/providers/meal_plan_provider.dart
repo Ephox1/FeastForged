@@ -11,15 +11,17 @@ final mealPlanRepositoryProvider = Provider<MealPlanRepository>(
 
 DateTime startOfCurrentWeek() {
   final now = DateTime.now();
-  return DateTime(now.year, now.month, now.day).subtract(
-    Duration(days: now.weekday - 1),
-  );
+  return DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).subtract(Duration(days: now.weekday - 1));
 }
 
 final currentWeekPlanProvider = FutureProvider<MealPlan?>((ref) async {
-  return ref.watch(mealPlanRepositoryProvider).fetchPlanForWeek(
-        startOfCurrentWeek(),
-      );
+  return ref
+      .watch(mealPlanRepositoryProvider)
+      .fetchPlanForWeek(startOfCurrentWeek());
 });
 
 final currentWeekEntriesProvider = FutureProvider<List<MealPlanEntry>>((
@@ -40,10 +42,7 @@ final todayPlannedEntriesProvider = Provider<List<MealPlanEntry>>((ref) {
 
 final todayCompletedPlanEntryIdsProvider = Provider<Set<String>>((ref) {
   final logs = ref.watch(todayLogsProvider).valueOrNull ?? const [];
-  return logs
-      .map((entry) => entry.mealPlanEntryId)
-      .whereType<String>()
-      .toSet();
+  return logs.map((entry) => entry.mealPlanEntryId).whereType<String>().toSet();
 });
 
 final todayCompletionCountProvider = Provider<int>((ref) {
@@ -114,6 +113,7 @@ class _MealPlanEditorNotifier extends AsyncNotifier<void> {
   }
 }
 
-final mealPlanEditorProvider = AsyncNotifierProvider<_MealPlanEditorNotifier, void>(
-  _MealPlanEditorNotifier.new,
-);
+final mealPlanEditorProvider =
+    AsyncNotifierProvider<_MealPlanEditorNotifier, void>(
+      _MealPlanEditorNotifier.new,
+    );

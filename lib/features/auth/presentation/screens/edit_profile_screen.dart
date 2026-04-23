@@ -76,9 +76,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
       }
       if (next is AsyncData && next.value != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Targets updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Targets updated')));
         context.pop();
       }
     });
@@ -119,8 +119,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        validator: (value) =>
-                            Validators.positiveNumber(value, fieldName: 'Weight'),
+                        validator: (value) => Validators.positiveNumber(
+                          value,
+                          fieldName: 'Weight',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -134,8 +136,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        validator: (value) =>
-                            Validators.positiveNumber(value, fieldName: 'Height'),
+                        validator: (value) => Validators.positiveNumber(
+                          value,
+                          fieldName: 'Height',
+                        ),
                       ),
                     ),
                   ],
@@ -162,8 +166,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     value: level,
                     groupValue: _activityLevel,
                     title: Text(level.label),
-                    onChanged: (value) =>
-                        setState(() => _activityLevel = value ?? _activityLevel),
+                    onChanged: (value) => setState(
+                      () => _activityLevel = value ?? _activityLevel,
+                    ),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

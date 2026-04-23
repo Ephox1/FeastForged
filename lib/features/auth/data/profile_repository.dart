@@ -15,10 +15,7 @@ class ProfileRepository {
         .maybeSingle();
 
     if (data == null) return null;
-    return UserProfile.fromJson({
-      ...data,
-      'email': user.email,
-    });
+    return UserProfile.fromJson({...data, 'email': user.email});
   }
 
   Future<UserProfile> upsertProfile(UserProfile profile) async {
@@ -62,7 +59,10 @@ class ProfileRepository {
   }
 
   String _slugify(String value) {
-    final normalized = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+    final normalized = value.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]+'),
+      '_',
+    );
     return normalized.replaceAll(RegExp(r'^_+|_+$'), '').padRight(3, 'x');
   }
 

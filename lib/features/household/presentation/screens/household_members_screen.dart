@@ -29,7 +29,8 @@ class HouseholdMembersScreen extends ConsumerWidget {
       ),
       body: members.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Could not load members: $error')),
+        error: (error, _) =>
+            Center(child: Text('Could not load members: $error')),
         data: (items) {
           if (items.isEmpty) {
             return const Center(
@@ -52,9 +53,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
                     child: ListTile(
                       title: Text(member.name),
                       subtitle: Text(
-                        member.age == null
-                            ? 'No age set'
-                            : 'Age ${member.age}',
+                        member.age == null ? 'No age set' : 'Age ${member.age}',
                       ),
                     ),
                   ),
@@ -90,7 +89,9 @@ class HouseholdMembersScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: ageController,
-                  decoration: const InputDecoration(labelText: 'Age (optional)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Age (optional)',
+                  ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return null;

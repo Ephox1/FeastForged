@@ -15,12 +15,10 @@ final savedRecipeIdsProvider = FutureProvider<Set<String>>((ref) async {
   return ref.watch(communityRepositoryProvider).fetchSavedRecipeIds();
 });
 
-final recipeDetailProvider = FutureProvider.family<CommunityRecipeDetail, String>((
-  ref,
-  recipeId,
-) async {
-  return ref.watch(communityRepositoryProvider).fetchRecipeDetail(recipeId);
-});
+final recipeDetailProvider =
+    FutureProvider.family<CommunityRecipeDetail, String>((ref, recipeId) async {
+      return ref.watch(communityRepositoryProvider).fetchRecipeDetail(recipeId);
+    });
 
 class _CommunityActionNotifier extends AsyncNotifier<void> {
   @override

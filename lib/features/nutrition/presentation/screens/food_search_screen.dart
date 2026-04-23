@@ -157,9 +157,9 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                                   'Try a simpler search or create a quick custom item.',
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                       ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -175,7 +175,10 @@ class _FoodSearchScreenState extends ConsumerState<FoodSearchScreen> {
                             const Divider(height: 1, indent: 16),
                         itemBuilder: (context, index) {
                           final recipe = recipes[index];
-                          return _RecipeTile(recipe: recipe, mealType: _mealType);
+                          return _RecipeTile(
+                            recipe: recipe,
+                            mealType: _mealType,
+                          );
                         },
                       );
                     },
@@ -236,10 +239,9 @@ class _RecipeSection extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withValues(alpha: 0.4),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(emptyMessage),

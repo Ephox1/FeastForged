@@ -97,9 +97,10 @@ class UserProfile {
     final trimmedUsername = username?.trim();
     final isGeneratedUsername =
         trimmedUsername != null &&
-        RegExp(r'^user_[a-f0-9]+$', caseSensitive: false).hasMatch(
-          trimmedUsername,
-        );
+        RegExp(
+          r'^user_[a-f0-9]+$',
+          caseSensitive: false,
+        ).hasMatch(trimmedUsername);
     if (trimmedUsername != null &&
         trimmedUsername.isNotEmpty &&
         !isGeneratedUsername) {
@@ -140,9 +141,11 @@ class UserProfile {
         (json['carbs_target'] as int?) ??
         250,
     dailyFatTarget:
-        (json['daily_fat_target'] as int?) ?? (json['fat_target'] as int?) ?? 65,
-    dietaryPreferences:
-        ((json['dietary_preferences'] as List?) ?? const []).cast<String>(),
+        (json['daily_fat_target'] as int?) ??
+        (json['fat_target'] as int?) ??
+        65,
+    dietaryPreferences: ((json['dietary_preferences'] as List?) ?? const [])
+        .cast<String>(),
     unitSystem: json['unit_system'] as String? ?? 'imperial',
     isPremium: json['is_premium'] as bool? ?? false,
     premiumExpiresAt: json['premium_expires_at'] != null

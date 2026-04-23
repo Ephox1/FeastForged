@@ -57,9 +57,8 @@ class _RecentFoodsNotifier extends AsyncNotifier<List<Recipe>> {
 
     return storedRecipes
         .map(
-          (recipeJson) => Recipe.fromJson(
-            jsonDecode(recipeJson) as Map<String, dynamic>,
-          ),
+          (recipeJson) =>
+              Recipe.fromJson(jsonDecode(recipeJson) as Map<String, dynamic>),
         )
         .toList();
   }
@@ -87,7 +86,9 @@ final recentFoodsProvider =
     );
 
 final todayLogsProvider = FutureProvider<List<MealLogEntry>>((ref) async {
-  return ref.watch(nutritionRepositoryProvider).fetchLogsForDate(DateTime.now());
+  return ref
+      .watch(nutritionRepositoryProvider)
+      .fetchLogsForDate(DateTime.now());
 });
 
 class _MealLoggerNotifier extends AsyncNotifier<void> {
@@ -162,12 +163,16 @@ class _CustomFoodNotifier extends AsyncNotifier<Recipe?> {
         id: _uuid.v4(),
         createdBy: userId,
         title: name.trim(),
-        description: brand?.trim().isEmpty ?? true ? null : 'Brand: ${brand!.trim()}',
+        description: brand?.trim().isEmpty ?? true
+            ? null
+            : 'Brand: ${brand!.trim()}',
         servings: defaultServings <= 0 ? 1 : defaultServings.round(),
         prepTimeMinutes: 0,
         cookTimeMinutes: 0,
-        calories: caloriesPerServing * (defaultServings <= 0 ? 1 : defaultServings),
-        proteinG: proteinPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        calories:
+            caloriesPerServing * (defaultServings <= 0 ? 1 : defaultServings),
+        proteinG:
+            proteinPerServing * (defaultServings <= 0 ? 1 : defaultServings),
         carbsG: carbsPerServing * (defaultServings <= 0 ? 1 : defaultServings),
         fatG: fatPerServing * (defaultServings <= 0 ? 1 : defaultServings),
         ingredients: [RecipeIngredient(name: name.trim(), quantity: 1)],
@@ -191,10 +196,9 @@ class _CustomFoodNotifier extends AsyncNotifier<Recipe?> {
   }
 }
 
-final customFoodProvider =
-    AsyncNotifierProvider<_CustomFoodNotifier, Recipe?>(
-      _CustomFoodNotifier.new,
-    );
+final customFoodProvider = AsyncNotifierProvider<_CustomFoodNotifier, Recipe?>(
+  _CustomFoodNotifier.new,
+);
 
 class DailyTotals {
   const DailyTotals({

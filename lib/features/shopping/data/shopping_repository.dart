@@ -109,7 +109,8 @@ class ShoppingRepository {
         .eq('meal_plan_id', mealPlan.id)
         .maybeSingle();
 
-    final shoppingList = existing ??
+    final shoppingList =
+        existing ??
         await supabase
             .from('shopping_lists')
             .insert({'meal_plan_id': mealPlan.id})
@@ -149,19 +150,21 @@ class ShoppingRepository {
 
     if (aggregated.isEmpty) return;
 
-    await supabase.from('shopping_list_items').insert(
-      aggregated.values
-          .map(
-            (item) => {
-              'shopping_list_id': shoppingListId,
-              'name': item.name,
-              'quantity': double.parse(item.quantity.toStringAsFixed(2)),
-              'unit': item.unit,
-              'section': item.section,
-              'checked': false,
-            },
-          )
-          .toList(),
-    );
+    await supabase
+        .from('shopping_list_items')
+        .insert(
+          aggregated.values
+              .map(
+                (item) => {
+                  'shopping_list_id': shoppingListId,
+                  'name': item.name,
+                  'quantity': double.parse(item.quantity.toStringAsFixed(2)),
+                  'unit': item.unit,
+                  'section': item.section,
+                  'checked': false,
+                },
+              )
+              .toList(),
+        );
   }
 }

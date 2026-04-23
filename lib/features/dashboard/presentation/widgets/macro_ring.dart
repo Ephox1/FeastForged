@@ -71,10 +71,7 @@ class MacroRing extends StatelessWidget {
                             : DesignTokens.brand,
                       ),
                     ),
-                    Text(
-                      'KCAL',
-                      style: ForgeTextStyles.eyebrow(),
-                    ),
+                    Text('KCAL', style: ForgeTextStyles.eyebrow()),
                   ],
                 ),
               ),
@@ -187,14 +184,8 @@ class _AnimatedRingState extends State<_AnimatedRing>
   void didUpdateWidget(_AnimatedRing old) {
     super.didUpdateWidget(old);
     if (old.progress != widget.progress) {
-      _anim = Tween<double>(
-        begin: old.progress,
-        end: widget.progress,
-      ).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: DesignTokens.ringAnimCurve,
-        ),
+      _anim = Tween<double>(begin: old.progress, end: widget.progress).animate(
+        CurvedAnimation(parent: _controller, curve: DesignTokens.ringAnimCurve),
       );
       _controller
         ..reset()

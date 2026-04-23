@@ -14,17 +14,21 @@ class NutritionRepository {
 
     final data = await (userId != null
         ? supabase
-        .from('recipes')
-        .select()
-        .or('title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%')
-        .or('created_by.eq.$userId,is_public.eq.true')
-        .order('is_public', ascending: false)
-        .order('downloads', ascending: false)
-        .limit(30)
+              .from('recipes')
+              .select()
+              .or(
+                'title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%',
+              )
+              .or('created_by.eq.$userId,is_public.eq.true')
+              .order('is_public', ascending: false)
+              .order('downloads', ascending: false)
+              .limit(30)
         : supabase
               .from('recipes')
               .select()
-              .or('title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%')
+              .or(
+                'title.ilike.%$escapedQuery%,description.ilike.%$escapedQuery%',
+              )
               .eq('is_public', true)
               .order('downloads', ascending: false)
               .limit(30));

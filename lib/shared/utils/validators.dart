@@ -33,7 +33,10 @@ class Validators {
     return null;
   }
 
-  static String? nonNegativeNumber(String? value, {String fieldName = 'Value'}) {
+  static String? nonNegativeNumber(
+    String? value, {
+    String fieldName = 'Value',
+  }) {
     if (value == null || value.trim().isEmpty) return '$fieldName is required';
     final number = double.tryParse(value.trim());
     if (number == null) return 'Enter a valid number';

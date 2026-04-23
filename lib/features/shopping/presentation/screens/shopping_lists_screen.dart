@@ -13,7 +13,8 @@ class ShoppingListsScreen extends ConsumerWidget {
     final shoppingLists = ref.watch(shoppingListsProvider);
     final shoppingEditor = ref.watch(shoppingEditorProvider);
     final currentPlan = ref.watch(currentWeekPlanProvider).valueOrNull;
-    final currentEntries = ref.watch(currentWeekEntriesProvider).valueOrNull ?? [];
+    final currentEntries =
+        ref.watch(currentWeekEntriesProvider).valueOrNull ?? [];
 
     ref.listen(shoppingEditorProvider, (_, next) {
       if (next is AsyncError) {
@@ -33,7 +34,8 @@ class ShoppingListsScreen extends ConsumerWidget {
         },
         child: shoppingLists.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(child: Text('Could not load lists: $error')),
+          error: (error, _) =>
+              Center(child: Text('Could not load lists: $error')),
           data: (lists) {
             return ListView(
               padding: const EdgeInsets.all(24),
@@ -46,22 +48,26 @@ class ShoppingListsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Plan-driven shopping',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           currentPlan == null
                               ? 'Create a weekly plan first, then generate a shopping list from the recipes scheduled this week.'
                               : 'Generate or refresh a shopping list from your current weekly plan.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: currentPlan == null || shoppingEditor is AsyncLoading
+                          onPressed:
+                              currentPlan == null ||
+                                  shoppingEditor is AsyncLoading
                               ? null
                               : () => ref
                                     .read(shoppingEditorProvider.notifier)
@@ -98,10 +104,12 @@ class ShoppingListsScreen extends ConsumerWidget {
                               value: item.checked,
                               onChanged: (value) {
                                 if (value == null) return;
-                                ref.read(shoppingEditorProvider.notifier).updateChecked(
-                                  itemId: item.id,
-                                  checked: value,
-                                );
+                                ref
+                                    .read(shoppingEditorProvider.notifier)
+                                    .updateChecked(
+                                      itemId: item.id,
+                                      checked: value,
+                                    );
                               },
                               title: Text(item.name),
                               subtitle: Text(
